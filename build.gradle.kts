@@ -8,10 +8,13 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+    maven(url = "https://jitpack.io")
 }
 
 dependencies {
     testImplementation(kotlin("test"))
+
+    implementation("com.github.SuperCraftAlex:ktlib:2ddcb142fb")
 }
 
 tasks.test {
