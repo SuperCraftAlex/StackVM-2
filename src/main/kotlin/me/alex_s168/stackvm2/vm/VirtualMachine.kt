@@ -1,25 +1,43 @@
 package me.alex_s168.stackvm2.vm
 
+import me.alex_s168.kth.UpCounter
 import me.alex_s168.stackvm2.inst.Instructions
+import me.alex_s168.stackvm2.vm.mem.Memory
 import kotlin.math.abs
 
 class VirtualMachine(
-    val mem: IntArray,
+    private val mem: Memory,
     private val interrupts: Map<Int, (VirtualMachine) -> Unit>
 ) {
-    var sp: Int = 0
+    private var sp: Int = 0
     private var pc: Int = 512
     private var condF = true
 
     var running = true
+
+    private var prevPc = -1
+
+    private val ticks = UpCounter()
+
+    fun ticksElapsed(): Int =
+        ticks.get()
+
+    fun push(v: Int) {
+        mem[sp ++] = v
+    }
+
+    fun pop(): Int {
+        return mem[-- sp]
+    }
 
     fun tick() {
         if (!running) {
             return
         }
 
-        pc %= mem.size
+        ticks.next()
 
+        prevPc = pc
         when (mem[pc]) {
             Instructions.NOOP.id  	 	-> {
 
@@ -35,6 +53,7 @@ class VirtualMachine(
             }
             Instructions.MSP.id    		-> {
                 sp = mem[pc + 1]
+                //sp = mem[pc + 1]
                 pc ++
             }
             Instructions.REL_MSP.id		-> {
@@ -169,12 +188,11 @@ class VirtualMachine(
             else -> {}
         }
 
-        pc += 1
+        pc ++
     }
 
     fun debug() {
-        val inst = Instructions.getInst(mem[pc])
-        print("next:  ")
+        val inst = Instructions.getInst(mem[prevPc])
 
         var txt = ""
         if (inst == null) {
@@ -184,13 +202,13 @@ class VirtualMachine(
             txt += inst.name + "  "
             var argStr = ""
             for (a in (0..<inst.args)) {
-                argStr += mem[pc + a + 1].toString().padStart(6, '0') + "  "
+                argStr += mem[prevPc + a + 1].toString().padStart(6, '0') + "  "
             }
             txt += argStr
         }
 
         print(txt.padEnd(20))
-        txt = "  current:  sp:  ${sp.toString().padStart(6, '0')}  pc:  ${pc.toString().padStart(6, '0')}    "
+        txt = "   sp:  ${sp.toString().padStart(6, '0')}  pc:  ${pc.toString().padStart(6, '0')}    "
         print(txt.padEnd(26) + "[")
         txt = "  "
 

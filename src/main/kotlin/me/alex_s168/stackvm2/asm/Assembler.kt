@@ -3,16 +3,16 @@ package me.alex_s168.stackvm2.asm
 import me.alex_s168.stackvm2.inst.Instructions
 
 class Assembler(
-    val labels: HashMap<String, Int>,
+    val labels: HashMap<String, Int> = HashMap(),
     val gen: IntArray,
-    var index: Int
+    var index: Int = 0
 ) {
 
     val errors = ArrayList<String>()
 
-    fun assemble(txt: String) {
-        val unresolved = mutableListOf<Pair<Int, String>>()
+    private val unresolved = mutableListOf<Pair<Int, String>>()
 
+    fun addSource(txt: String): Assembler {
         val lines = txt.split('\n')
 
         for (lineI in lines) {
@@ -65,11 +65,22 @@ class Assembler(
             }
         }
 
+        return this
+    }
+
+    fun resolveLabels(): Assembler {
         for ((i, arg) in unresolved) {
             if (arg in labels)
                 gen[i] = labels[arg]!!
             else errors.add("invalid literal: $arg")
         }
+
+        return this
+    }
+
+    // not used YET
+    fun complete(): Assembler {
+        return this
     }
 
 }

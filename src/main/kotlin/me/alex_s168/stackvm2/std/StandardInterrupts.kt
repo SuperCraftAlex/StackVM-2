@@ -12,18 +12,16 @@ object StandardInterrupts {
 
     init {
 
-        interrupts[PUT_CHAR] = { state ->
-            print(state.mem[state.sp - 1].toChar())
-            state.sp --
+        interrupts[PUT_CHAR] = { vm ->
+            print(vm.pop().toChar())
         }
 
-        interrupts[GET_CHAR] = { state ->
-            state.mem[state.sp] = readln().single().code
-            state.sp ++
+        interrupts[GET_CHAR] = { vm ->
+            vm.push(readln().single().code)
         }
 
-        interrupts[EXIT] = { state ->
-            state.running = false
+        interrupts[EXIT] = { vm ->
+            vm.running = false
         }
 
     }

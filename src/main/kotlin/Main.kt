@@ -2,12 +2,16 @@ import me.alex_s168.kth.ifNotEmpty
 import me.alex_s168.stackvm2.asm.Assembler
 import me.alex_s168.stackvm2.std.StandardInterrupts
 import me.alex_s168.stackvm2.vm.VirtualMachine
+import me.alex_s168.stackvm2.vm.mem.SimpleMemory
 import kotlin.system.exitProcess
 
 fun main() {
-    val asm = Assembler(HashMap(), IntArray(1 shl 17), 512)
+    val asm = Assembler(
+        gen = IntArray(1 shl 17),
+        index = 512
+    )
 
-    asm.assemble("""
+    asm.addSource("""
     ; TEST CODE
     
     jmp test
@@ -22,33 +26,10 @@ fun main() {
         int 1
         
         int 33
-
-    ; alloc__init:
-    ;     ldi 1024
-    ;     ldi 0
-    ;     alloc__init__l__code_0:
-    ;         swp
-    ;         dup
-    ;         ldi 33
-    ;         swp
-    ;         sts
-    ;         swp
-    ;     
-    ;         swp
-    ;         ldi 33
-    ;         add
-    ;         swp
-    ;         inc
-    ;     
-    ;         dup
-    ;         ldi 10
-    ;         sub
-    ;         poc
-    ;         jmc alloc__init__l__code_0
-    ; 
-    ; ;   ret
-    ;     int 33
     """)
+
+    asm.resolveLabels()
+        .complete()
 
     asm.errors.ifNotEmpty {
         println("Errors:")
@@ -58,23 +39,15 @@ fun main() {
         exitProcess(-1)
     }
 
-    val vm = VirtualMachine(asm.gen, StandardInterrupts.getInterruptTable())
+    val vm = VirtualMachine(
+        SimpleMemory(asm.gen),
+        StandardInterrupts.getInterruptTable()
+    )
 
-    var ok = false
-    for (tick in (0..<10000)) {
-        if (!vm.running) {
-            ok = true
-            println("Took ${tick+1} ticks to execute!")
-            break
-        }
-
-        vm.debug()
+    while (vm.running) {
         vm.tick()
+        vm.debug()
     }
-    if (!ok)
-        println("Exceeded tick limit!")
 
-    //while (vm.running) {
-    //    vm.tick()
-    //}
+    println("Took ${vm.ticksElapsed()} ticks to execute!")
 }
