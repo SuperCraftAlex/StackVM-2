@@ -1,11 +1,11 @@
-package me.alex_s168.kth
+package me.alex_s168.ktlib.counter
 
-class UpCounter(
+class DownCounter(
     private var count: Int = 0
 ): Counter<Int> {
 
     override fun next() {
-        count ++
+        count --
     }
 
     override fun get(): Int =

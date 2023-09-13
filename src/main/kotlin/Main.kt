@@ -1,4 +1,4 @@
-import me.alex_s168.kth.ifNotEmpty
+import me.alex_s168.ktlib.ext.ifNotEmpty
 import me.alex_s168.stackvm2.asm.Assembler
 import me.alex_s168.stackvm2.std.StandardInterrupts
 import me.alex_s168.stackvm2.vm.VirtualMachine

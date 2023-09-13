@@ -1,4 +1,4 @@
-package me.alex_s168.kth
+package me.alex_s168.ktlib.counter
 
 interface Counter<E> {
 

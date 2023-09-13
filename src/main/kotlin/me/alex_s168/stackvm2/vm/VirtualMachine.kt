@@ -1,6 +1,6 @@
 package me.alex_s168.stackvm2.vm
 
-import me.alex_s168.kth.UpCounter
+import me.alex_s168.ktlib.counter.UpCounter
 import me.alex_s168.stackvm2.inst.Instructions
 import me.alex_s168.stackvm2.vm.mem.Memory
 import kotlin.math.abs
