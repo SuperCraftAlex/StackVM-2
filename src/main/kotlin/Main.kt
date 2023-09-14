@@ -1,11 +1,10 @@
-import me.alex_s168.ktlib.collection.ifNotEmpty
-import me.alex_s168.stackvm2.asm.Assembler
+import me.alex_s168.stackvm2.ktcode.TestCode
 import me.alex_s168.stackvm2.std.StandardInterrupts
 import me.alex_s168.stackvm2.vm.VirtualMachine
 import me.alex_s168.stackvm2.vm.mem.SimpleMemory
-import kotlin.system.exitProcess
 
 fun main() {
+    /*
     val asm = Assembler(
         gen = IntArray(1 shl 17),
         index = 512
@@ -41,6 +40,12 @@ fun main() {
 
     val vm = VirtualMachine(
         SimpleMemory(asm.gen),
+        StandardInterrupts.getInterruptTable()
+    )
+     */
+
+    val vm = VirtualMachine(
+        SimpleMemory(TestCode(512, VirtualMachine.ELEMENT_SIZE).compile()),
         StandardInterrupts.getInterruptTable()
     )
 

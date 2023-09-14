@@ -70,15 +70,15 @@ class VirtualMachine(
                 }
             }
             Instructions.CALL.id 		-> {
+                val old = pc
                 pc = mem[pc + 1] - 1
-                mem[sp] = pc
-                sp += 1
+                push(old + 1)
             }
             Instructions.CALL_COND.id 	-> {
                 if (condF) {
+                    val old = pc
                     pc = mem[pc + 1] - 1
-                    mem[sp] = pc
-                    sp ++
+                    push(old + 1)
                 }
             }
             Instructions.RET.id 		-> {
@@ -192,6 +192,10 @@ class VirtualMachine(
     }
 
     fun debug() {
+        fun printInt(v: Int) =
+            if (v < 0) "- " + v.toString().substring(1).padStart(4, '0')
+            else v.toString().padStart(6, '0')
+
         val inst = Instructions.getInst(mem[prevPc])
 
         var txt = ""
@@ -202,13 +206,13 @@ class VirtualMachine(
             txt += inst.name + "  "
             var argStr = ""
             for (a in (0..<inst.args)) {
-                argStr += mem[prevPc + a + 1].toString().padStart(6, '0') + "  "
+                argStr += printInt(mem[prevPc + a + 1]) + "  "
             }
             txt += argStr
         }
 
         print(txt.padEnd(20))
-        txt = "   sp:  ${sp.toString().padStart(6, '0')}  pc:  ${pc.toString().padStart(6, '0')}    "
+        txt = "   sp:  ${printInt(sp)}  pc:  ${printInt(pc)}    "
         print(txt.padEnd(26) + "[")
         txt = "  "
 
@@ -219,12 +223,16 @@ class VirtualMachine(
                 if (i == 5) {
                     "......" + "  "
                 } else {
-                    mem[sp-i-1].toString().padStart(6, '0') + "  "
+                    printInt(mem[sp-i-1]) + "  "
                 }
             }
         }
 
         println("$txt]")
+    }
+
+    companion object {
+        const val ELEMENT_SIZE: Int = Int.SIZE_BYTES
     }
 }
 

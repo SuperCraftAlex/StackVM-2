@@ -14,7 +14,7 @@ repositories {
 dependencies {
     testImplementation(kotlin("test"))
 
-    implementation("com.github.SuperCraftAlex:ktlib:2ddcb142fb")
+    implementation("com.github.SuperCraftAlex:ktlib:f1bbb60322")
 }
 
 tasks.test {
