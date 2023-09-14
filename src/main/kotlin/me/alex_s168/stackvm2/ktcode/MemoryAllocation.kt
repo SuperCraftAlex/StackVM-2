@@ -1,151 +1,190 @@
 package me.alex_s168.stackvm2.ktcode
 
+import me.alex_s168.stackvm2.inst.Instructions
 import me.alex_s168.stackvm2.ktcode.exception.UnsupportedOperationException
 import kotlin.math.max
 
 class MemoryAllocation(
-    val code: KTCode,
+    val ktcode: KTCode,
     val size: Int,
     val uuid: Long = 0
 ) {
 
-    val eAm = max(1, size / code.elemSize)
+    val eAm = max(1, size / ktcode.elemSize)
 
     private fun forElems(block: (Int) -> Unit) {
-        code.moveSpRel(1-eAm)
+        ktcode.moveSpRel(1-eAm)
 
         for (i in 0..<eAm) {
-            if (i != 0) code.incSp()
+            if (i != 0) ktcode.incSp()
             block(i)
         }
     }
 
     operator fun inc(): MemoryAllocation {
-        code.load(this)
-        forElems { code.inc() }
-        code.store(this)
+        ktcode.load(this)
+        forElems { ktcode.inc() }
+        ktcode.store(this)
 
         return this
     }
 
     operator fun dec(): MemoryAllocation {
-        code.load(this)
-        forElems { code.dec() }
-        code.store(this)
+        ktcode.load(this)
+        forElems { ktcode.dec() }
+        ktcode.store(this)
 
         return this
     }
 
     operator fun plusAssign(value: Int) {
-        code.load(this)
+        ktcode.load(this)
         forElems {
-            code.loadImm(value)
-            code.add()
+            ktcode.loadImm(value)
+            ktcode.add()
         }
-        code.store(this)
+        ktcode.store(this)
     }
 
     operator fun minusAssign(value: Int) {
-        code.load(this)
+        ktcode.load(this)
         forElems {
-            code.loadImm(value)
-            code.sub()
+            ktcode.loadImm(value)
+            ktcode.sub()
         }
-        code.store(this)
+        ktcode.store(this)
     }
 
     operator fun timesAssign(value: Int) {
-        code.load(this)
+        ktcode.load(this)
         forElems {
-            code.loadImm(value)
-            code.mul()
+            ktcode.loadImm(value)
+            ktcode.mul()
         }
-        code.store(this)
+        ktcode.store(this)
     }
 
     operator fun divAssign(value: Int) {
-        code.load(this)
+        ktcode.load(this)
         forElems {
-            code.loadImm(value)
-            code.div()
+            ktcode.loadImm(value)
+            ktcode.div()
         }
-        code.store(this)
+        ktcode.store(this)
     }
 
     operator fun remAssign(value: Int) {
-        code.load(this)
+        ktcode.load(this)
         forElems {
-            code.loadImm(value)
-            code.mod()
+            ktcode.loadImm(value)
+            ktcode.mod()
         }
-        code.store(this)
+        ktcode.store(this)
     }
 
     operator fun plusAssign(value: MemoryAllocation) {
-        code.load(this)
+        ktcode.load(this)
         if (value.eAm == 1) {
-            code.load(value)
-            forElems { code.add() }
+            ktcode.load(value)
+            forElems { ktcode.add() }
         } else {
             throw UnsupportedOperationException()
         }
-        code.store(this)
+        ktcode.store(this)
     }
 
     operator fun minusAssign(value: MemoryAllocation) {
-        code.load(this)
+        ktcode.load(this)
         if (value.eAm == 1) {
-            code.load(value)
-            forElems { code.sub() }
+            ktcode.load(value)
+            forElems { ktcode.sub() }
         } else {
             throw UnsupportedOperationException()
         }
-        code.store(this)
+        ktcode.store(this)
     }
 
     operator fun timesAssign(value: MemoryAllocation) {
-        code.load(this)
+        ktcode.load(this)
         if (value.eAm == 1) {
-            code.load(value)
-            forElems { code.mul() }
+            ktcode.load(value)
+            forElems { ktcode.mul() }
         } else {
             throw UnsupportedOperationException()
         }
-        code.store(this)
+        ktcode.store(this)
     }
 
     operator fun divAssign(value: MemoryAllocation) {
-        code.load(this)
+        ktcode.load(this)
         if (value.eAm == 1) {
-            code.load(value)
-            forElems { code.div() }
+            ktcode.load(value)
+            forElems { ktcode.div() }
         } else {
             throw UnsupportedOperationException()
         }
-        code.store(this)
+        ktcode.store(this)
     }
 
     operator fun remAssign(value: MemoryAllocation) {
-        code.load(this)
+        ktcode.load(this)
         if (value.eAm == 1) {
-            code.load(value)
-            forElems { code.mod() }
+            ktcode.load(value)
+            forElems { ktcode.mod() }
         } else {
             throw UnsupportedOperationException()
         }
-        code.store(this)
+        ktcode.store(this)
     }
 
     operator fun unaryMinus(): MemoryAllocation {
-        code.load(this)
+        ktcode.load(this)
         if (eAm == 1) {
-            code.negate()
+            ktcode.negate()
         } else {
             throw UnsupportedOperationException()
         }
-        code.store(this)
+        ktcode.store(this)
 
         return this
+    }
+
+    fun load(off: Int) {
+        ktcode.mem += Instructions.LD_ADDR.id
+        ktcode.unresolvedReferences3.add(Triple(ktcode.mem.size, this, off))
+        ktcode.mem += 0
+    }
+
+    infix fun eq(value: Any?): MemoryAllocation {
+        if (value is MemoryAllocation) {
+            if (value.eAm != eAm)
+                throw UnsupportedOperationException("Cannot compare MemoryAllocations of different sizes!")
+
+            ktcode.loadImm(1)
+
+            forElems {
+                this.load(it)
+                value.load(it)
+
+                ktcode.cmpEq()
+                ktcode.and()
+
+                ktcode.pushCf()
+            }
+
+            return ktcode.getCf()
+        }
+
+        if (value is Int) {
+            ktcode.load(this)
+            ktcode.loadImm(value)
+
+            ktcode.cmpEq()
+
+            return ktcode.getCf()
+        }
+
+        return ktcode.FALSE
     }
 
 }

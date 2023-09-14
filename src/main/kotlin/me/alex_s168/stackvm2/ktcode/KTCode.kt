@@ -13,16 +13,21 @@ abstract class KTCode(
 
     abstract fun prog()
 
-    private val memAllocs = LockableArrayList<MemoryAllocation>()
+    val memAllocs = LockableArrayList<MemoryAllocation>()
     val unresolvedReferences = LockableArrayList<Pair<Int, MemoryAllocation>>()
-    private val funcs = LockableArrayList<VMFunction>()
-    private val callStack = LockableStack<MemoryAllocation>()
+    val unresolvedReferences3 = LockableArrayList<Triple<Int, MemoryAllocation, Int>>()
+    val funcs = LockableArrayList<VMFunction>()
+    val callStack = LockableStack<MemoryAllocation>()
+
+    val TRUE = intVar(1)
+    val FALSE = intVar(0)
 
     override fun lock() {
         super.lock()
 
         memAllocs.lock()
         unresolvedReferences.lock()
+        unresolvedReferences3.lock()
         funcs.lock()
         callStack.lock()
     }
@@ -61,6 +66,36 @@ abstract class KTCode(
             loadImm(value.toInt())
             store(it)
         }
+    }
+
+    fun getTop(): MemoryAllocation {
+        if (locked) {
+            throw IllegalStateException("Code is locked!")
+        }
+
+        return alloc(elemSize).also {
+            load(it)
+        }
+    }
+
+    fun getCf(): MemoryAllocation {
+        if (locked) {
+            throw IllegalStateException("Code is locked!")
+        }
+
+        return alloc(elemSize).also {
+            pushCf()
+            store(it)
+        }
+    }
+
+    fun cmpEq() {
+        if (locked) {
+            throw IllegalStateException("Code is locked!")
+        }
+
+        sub()
+        not()
     }
 
     fun negate() {
@@ -153,42 +188,51 @@ abstract class KTCode(
         loadImm(value)
 
     fun load(alloc: MemoryAllocation) {
-        if (locked) {
+        if (locked)
             throw IllegalStateException("Code is locked!")
-        }
 
-        if (!memAllocs.contains(alloc)) {
+        if (!memAllocs.contains(alloc))
             throw IllegalArgumentException("Cannot load from unallocated memory!")
-        }
 
-        val am = max(1, alloc.size / elemSize)
+        //if (mem.size < 2 || mem[mem.size-2] != Instructions.ST_ADDR.id)
+        //    lastStored = null
+//
+        //if (alloc == lastStored) {
+        //    mem.removeLast()
+        //    mem.removeLast()
+        //    dup()
+        //    store(alloc)
+        //    return
+        //}
 
-        repeat(am) {
+        repeat(alloc.eAm) {
             mem += Instructions.LD_ADDR.id
             unresolvedReferences.add(mem.size to alloc)
             mem += 0
         }
+
+        lastStored = null
     }
 
+    private var lastStored: MemoryAllocation? = null
+
     fun store(alloc: MemoryAllocation) {
-        if (locked) {
+        if (locked)
             throw IllegalStateException("Code is locked!")
-        }
 
-        if (!memAllocs.contains(alloc)) {
+        if (!memAllocs.contains(alloc))
             throw IllegalArgumentException("Cannot store to unallocated memory!")
-        }
 
-        val am = max(1, alloc.size / elemSize)
-
-        repeat(am) {
+        repeat(alloc.eAm) {
             mem += Instructions.ST_ADDR.id
             unresolvedReferences.add(mem.size to alloc)
             mem += 0
         }
 
-        if (am > 1)
-            rotateTop(am - 1)
+        if (alloc.eAm > 1)
+            rotateTop(alloc.eAm - 1)
+
+        lastStored = alloc
     }
 
     fun rotateTop(amount: Int) {
@@ -241,6 +285,10 @@ abstract class KTCode(
 
         for ((where, alloc) in unresolvedReferences) {
             mem[where] = allocs[alloc]!!
+        }
+
+        for ((where, alloc, offset) in unresolvedReferences3) {
+            mem[where] = allocs[alloc]!! + offset
         }
 
         lock()
