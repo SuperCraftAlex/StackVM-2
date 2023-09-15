@@ -19,7 +19,6 @@ interface MutableStackable<T: MutableStackable<T>>: Stackable {
         return this as T
     }
 
-
     operator fun dec(): T {
         val ktcode = getKTCode()
 
@@ -85,82 +84,124 @@ interface MutableStackable<T: MutableStackable<T>>: Stackable {
         ktcode.store(this)
     }
 
-    operator fun plusAssign(value: MutableStackable<*>) {
+    operator fun plusAssign(value: Stackable) {
         val ktcode = getKTCode()
 
-        ktcode.load(this)
         if (value.getElemSize() == 1) {
-            ktcode.load(value)
-            forElems { ktcode.add() }
-        } else {
-            throw UnsupportedOperationException()
+            repeat(getElemSize()) {
+                putOntoStack(it)
+                value.putOntoStack()
+                ktcode.add()
+                loadFromStack(it)
+            }
         }
-        ktcode.store(this)
+        else if (value.getElemSize() == getElemSize()) {
+            repeat(getElemSize()) {
+                putOntoStack(it)
+                value.putOntoStack(it)
+                ktcode.add()
+                loadFromStack(it)
+            }
+        }
+        else {
+            throw UnsupportedOperationException("incompatible element sizes!")
+        }
     }
 
-    operator fun minusAssign(value: MutableStackable<*>) {
+    operator fun minusAssign(value: Stackable) {
         val ktcode = getKTCode()
 
-        ktcode.load(this)
         if (value.getElemSize() == 1) {
-            ktcode.load(value)
-            forElems { ktcode.sub() }
-        } else {
-            throw UnsupportedOperationException()
+            repeat(getElemSize()) {
+                putOntoStack(it)
+                value.putOntoStack()
+                ktcode.sub()
+                loadFromStack(it)
+            }
         }
-        ktcode.store(this)
+        else if (value.getElemSize() == getElemSize()) {
+            repeat(getElemSize()) {
+                putOntoStack(it)
+                value.putOntoStack(it)
+                ktcode.add()
+                loadFromStack(it)
+            }
+        }
+        else {
+            throw UnsupportedOperationException("incompatible element sizes!")
+        }
     }
 
-    operator fun timesAssign(value: MutableStackable<*>) {
+    operator fun timesAssign(value: Stackable) {
         val ktcode = getKTCode()
 
-        ktcode.load(this)
         if (value.getElemSize() == 1) {
-            ktcode.load(value)
-            forElems { ktcode.mul() }
-        } else {
-            throw UnsupportedOperationException()
+            repeat(getElemSize()) {
+                putOntoStack(it)
+                value.putOntoStack()
+                ktcode.mul()
+                loadFromStack(it)
+            }
         }
-        ktcode.store(this)
+        else if (value.getElemSize() == getElemSize()) {
+            repeat(getElemSize()) {
+                putOntoStack(it)
+                value.putOntoStack(it)
+                ktcode.add()
+                loadFromStack(it)
+            }
+        }
+        else {
+            throw UnsupportedOperationException("incompatible element sizes!")
+        }
     }
 
-    operator fun divAssign(value: MutableStackable<*>) {
+    operator fun divAssign(value: Stackable) {
         val ktcode = getKTCode()
 
-        ktcode.load(this)
         if (value.getElemSize() == 1) {
-            ktcode.load(value)
-            forElems { ktcode.div() }
-        } else {
-            throw UnsupportedOperationException()
+            repeat(getElemSize()) {
+                putOntoStack(it)
+                value.putOntoStack()
+                ktcode.div()
+                loadFromStack(it)
+            }
         }
-        ktcode.store(this)
+        else if (value.getElemSize() == getElemSize()) {
+            repeat(getElemSize()) {
+                putOntoStack(it)
+                value.putOntoStack(it)
+                ktcode.add()
+                loadFromStack(it)
+            }
+        }
+        else {
+            throw UnsupportedOperationException("incompatible element sizes!")
+        }
     }
 
-    operator fun remAssign(value: MutableStackable<*>) {
+    operator fun remAssign(value: Stackable) {
         val ktcode = getKTCode()
 
-        ktcode.load(this)
         if (value.getElemSize() == 1) {
-            ktcode.load(value)
-            forElems { ktcode.mod() }
-        } else {
-            throw UnsupportedOperationException()
+            repeat(getElemSize()) {
+                putOntoStack(it)
+                value.putOntoStack()
+                ktcode.mod()
+                loadFromStack(it)
+            }
         }
-        ktcode.store(this)
-    }
-
-    operator fun unaryMinus(): T {
-        val ktcode = getKTCode()
-
-        ktcode.load(this)
-
-        if (getElemSize() == 1) ktcode.negate()
-        else forElems { ktcode.negate() }
-
-        ktcode.store(this)
-
-        return this as T
+        else if (value.getElemSize() == getElemSize()) {
+            repeat(getElemSize()) {
+                putOntoStack(it)
+                value.putOntoStack(it)
+                ktcode.add()
+                loadFromStack(it)
+            }
+        }
+        else {
+            throw UnsupportedOperationException("incompatible element sizes!")
+        }
     }
 
     operator fun set(index: Int, value: Int) {

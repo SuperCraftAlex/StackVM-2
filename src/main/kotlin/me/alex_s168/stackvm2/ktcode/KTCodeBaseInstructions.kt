@@ -1,21 +1,27 @@
 package me.alex_s168.stackvm2.ktcode
 
+import me.alex_s168.ktlib.Lockable
 import me.alex_s168.stackvm2.inst.Instructions
-import java.util.ArrayList
+import kotlin.collections.ArrayList
 
 open class KTCodeBaseInstructions(
     offset: Int
-) {
+): Lockable {
 
     var locked = false
         private set
 
-    open fun lock() {
+    override fun isLocked(): Boolean =
+        locked
+
+    override fun lock() {
         locked = true
     }
 
-    val mem = ArrayList<Int>().also {
-        it.addAll(0..<offset)
+    val mem = ArrayList<Int>(offset).also {
+        for (i in 0..<offset) {
+            it.add(Instructions.NOOP.id)
+        }
     }
 
     fun noop() {

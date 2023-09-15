@@ -44,6 +44,7 @@ object AssemblerTest {
 
         val vm = VirtualMachine(
             SimpleMemory(asm.gen),
+            512,
             StandardInterrupts.getInterruptTable()
         )
 

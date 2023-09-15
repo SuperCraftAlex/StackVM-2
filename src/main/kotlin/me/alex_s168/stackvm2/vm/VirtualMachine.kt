@@ -7,10 +7,10 @@ import kotlin.math.abs
 
 class VirtualMachine(
     private val mem: Memory,
+    private var pc: Int = 512,
     private val interrupts: Map<Int, (VirtualMachine) -> Unit>
 ) {
     private var sp: Int = 0
-    private var pc: Int = 512
     private var condF = true
 
     var running = true
@@ -107,11 +107,10 @@ class VirtualMachine(
                 sp --
             }
             Instructions.LD_ST_ADDR.id	-> {
-                mem[sp - 1] = mem[mem[sp - 1]]
+                push(mem[pop()])
             }
             Instructions.ST_ST_ADDR.id	-> {
-                mem[mem[sp - 1]] = mem[mem[sp - 2]]
-                sp -= 2
+                mem[pop()] = pop()
             }
 
             Instructions.INC.id		 	-> {
@@ -204,7 +203,7 @@ class VirtualMachine(
         else {
             txt += inst.name + "  "
             var argStr = ""
-            for (a in (0..<inst.args)) {
+            for (a in (0..<inst.argCount)) {
                 argStr += printInt(mem[prevPc + a + 1]) + "  "
             }
             txt += argStr

@@ -2,25 +2,28 @@ package me.alex_s168.stackvm2.ktcode
 
 import me.alex_s168.ktlib.collection.LockableArrayList
 import me.alex_s168.ktlib.collection.LockableStack
+import me.alex_s168.stackvm2.common.MemoryLayout
 import me.alex_s168.stackvm2.inst.Instructions
 import me.alex_s168.stackvm2.ktcode.`var`.*
 import java.util.*
 import kotlin.math.max
 
-abstract class KTCode(
+open class KTCode(
     offset: Int,
-    val elemSize: Int
+    val elemSize: Int,
+    val memoryLayout: MemoryLayout
 ): KTCodeBaseInstructions(offset) {
 
     val random = Random()
 
-    abstract fun prog()
+    var prog: (KTCode) -> Unit = {}
 
     val memAllocs = LockableArrayList<MemoryAllocation>()
     val unresolvedReferences = LockableArrayList<Pair<Int, MemoryAllocation>>()
     val unresolvedReferences3 = LockableArrayList<Triple<Int, MemoryAllocation, Int>>()
     val funcs = LockableArrayList<VMFunction>()
     val callStack = LockableStack<MemoryAllocation>()
+    val ramAllocs = LockableArrayList<RAMAllocation>()
 
     val TRUE = static(1)
     val FALSE = static(0)
@@ -35,11 +38,7 @@ abstract class KTCode(
         callStack.lock()
     }
 
-    operator fun VMFunction.invoke(vararg args: Any) {
-        this.call(*args)
-    }
-
-    fun static(value: Int, ): StaticValue =
+    fun static(value: Int): StaticValue =
         StaticValue(this, value)
 
     fun static(value: Char): StaticValue =
@@ -55,6 +54,15 @@ abstract class KTCode(
 
         return MutableMemoryAllocation(this, max(1, size / elemSize), initVal = init).also {
             memAllocs.add(it)
+        }
+    }
+
+    fun ram(size: Int): RAMAllocation {
+        if (locked)
+            throw IllegalStateException("Code is locked!")
+
+        return RAMAllocation(this, max(1, size / elemSize)).also {
+            ramAllocs.add(it)
         }
     }
 
@@ -104,19 +112,6 @@ abstract class KTCode(
         return cond
     }
 
-    fun Stackable.otherwise(block: () -> Unit) {
-        putOntoStack()
-        popCf()
-
-        mem += Instructions.JUMP_COND.id
-        val old = mem.size
-        mem += 0
-
-        block()
-
-        mem[old] = mem.size
-    }
-
     fun cmpEq() {
         if (locked) {
             throw IllegalStateException("Code is locked!")
@@ -134,21 +129,6 @@ abstract class KTCode(
 
         loadImm(-1)
         mem += Instructions.MUL.id
-    }
-
-    fun negate(amount: Int) {
-        if (locked) {
-            throw IllegalStateException("Code is locked!")
-        }
-
-        moveSpRel(-amount)
-
-        repeat(amount) {
-            loadImm(-1)
-            mul()
-
-            incSp()
-        }
     }
 
     fun call(alloc: MemoryAllocation) {
@@ -246,7 +226,7 @@ abstract class KTCode(
         }
     }
 
-    fun func(args: Int, code: () -> Unit): VMFunction {
+    fun func(args: Int, code: (VMFunction.FunctionCallData) -> Unit): VMFunction {
         if (locked) {
             throw IllegalStateException("Code is locked!")
         }
@@ -256,10 +236,40 @@ abstract class KTCode(
         }
     }
 
+    private fun getMemRegions(): MutableList<IntRange> =
+        memoryLayout.ramRegions.filter {
+            it.start != 0
+        }.map {
+            it.start..<it.end
+        }.toMutableList()
+
+    private fun MutableList<IntRange>.consumeMemory(amount: Int): IntRange? {
+        this.forEachIndexed { i, it ->
+            if (it.count() >= amount) {
+                val ret = it.first..<it.first + amount
+                set(i, (it.first + amount)..it.last)
+                return ret
+            }
+        }
+        return null
+    }
+
+    fun ret(value: Stackable) {
+        if (locked) {
+            throw IllegalStateException("Code is locked!")
+        }
+
+        value.putOntoStack()
+
+        ret()
+    }
+
     fun compile(): IntArray {
-        prog()
+        prog(this)
 
         val allocs = HashMap<MemoryAllocation, Int>()
+
+        val ram = getMemRegions()
 
         for ((i, f) in funcs.withIndex()) {
             allocs[f.memAlloc] = mem.size
@@ -269,13 +279,24 @@ abstract class KTCode(
             store(al)
 
             callStack.push(al)
-            f.code()
-            ret()
+
+            val fcd = VMFunction.FunctionCallData(f)
+            f.code(fcd)
+            fcd.getReturnValue()?.putOntoStack()
+
+            if (callStack.isNotEmpty())
+                ret()
         }
 
         for (alloc in memAllocs) {
             allocs[alloc] = mem.size
             mem.addAll(alloc.initVal.asIterable())
+        }
+
+        for (alloc in ramAllocs) {
+            ram.consumeMemory(alloc.size)?.let {
+                allocs[alloc] = it.first
+            } ?: throw IllegalStateException("Not enough RAM!")
         }
 
         for ((where, alloc) in unresolvedReferences) {

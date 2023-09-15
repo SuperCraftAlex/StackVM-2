@@ -1,5 +1,6 @@
 package me.alex_s168.stackvm2.ktcode.`var`
 
+import me.alex_s168.stackvm2.inst.Instructions
 import me.alex_s168.stackvm2.ktcode.KTCode
 
 interface Stackable {
@@ -38,13 +39,15 @@ interface Stackable {
         if (index.getElemSize() != 1)
             throw UnsupportedOperationException("Index needs to be Int!")
 
-        return get(index)
+        putOntoStack(index)
+
+        return getKTCode().getTop()
     }
 
     operator fun not(): Stackable {
         val ktcode = getKTCode()
 
-        val new = ktcode.alloc(getElemSize())
+        val new = ktcode.alloc(getElemSize() * ktcode.elemSize)
 
         forElems {
             putOntoStack(it)
@@ -58,6 +61,251 @@ interface Stackable {
         }
 
         return new
+    }
+
+    fun otherwise(block: () -> Unit) {
+        val ktcode = getKTCode()
+
+        putOntoStack()
+        ktcode.popCf()
+
+        ktcode.mem += Instructions.JUMP_COND.id
+        val old = ktcode.mem.size
+        ktcode.mem += 0
+
+        block()
+
+        ktcode.mem[old] = ktcode.mem.size
+    }
+
+
+    operator fun plus(other: Stackable): Stackable {
+        val ktcode = getKTCode()
+
+        val alloc = ktcode.alloc(getElemSize() * ktcode.elemSize)
+
+        if (other.getElemSize() == 1) {
+            repeat(getElemSize()) {
+                putOntoStack(it)
+                other.putOntoStack()
+                ktcode.add()
+                alloc.loadFromStack(it)
+            }
+        }
+        else if (other.getElemSize() == getElemSize()) {
+            repeat(getElemSize()) {
+                putOntoStack(it)
+                other.putOntoStack(it)
+                ktcode.add()
+                alloc.loadFromStack(it)
+            }
+        }
+        else {
+            throw UnsupportedOperationException("Incompatible element sizes!")
+        }
+
+        return alloc
+    }
+
+    operator fun minus(other: Stackable): Stackable {
+        val ktcode = getKTCode()
+
+        val alloc = ktcode.alloc(getElemSize() * ktcode.elemSize)
+
+        if (other.getElemSize() == 1) {
+            repeat(getElemSize()) {
+                putOntoStack(it)
+                other.putOntoStack()
+                ktcode.sub()
+                alloc.loadFromStack(it)
+            }
+        }
+        else if (other.getElemSize() == getElemSize()) {
+            repeat(getElemSize()) {
+                putOntoStack(it)
+                other.putOntoStack(it)
+                ktcode.sub()
+                alloc.loadFromStack(it)
+            }
+        }
+        else {
+            throw UnsupportedOperationException("Incompatible element sizes!")
+        }
+
+        return alloc
+    }
+
+    operator fun times(other: Stackable): Stackable {
+        val ktcode = getKTCode()
+
+        val alloc = ktcode.alloc(getElemSize() * ktcode.elemSize)
+
+        if (other.getElemSize() == 1) {
+            repeat(getElemSize()) {
+                putOntoStack(it)
+                other.putOntoStack()
+                ktcode.mul()
+                alloc.loadFromStack(it)
+            }
+        }
+        else if (other.getElemSize() == getElemSize()) {
+            repeat(getElemSize()) {
+                putOntoStack(it)
+                other.putOntoStack(it)
+                ktcode.mul()
+                alloc.loadFromStack(it)
+            }
+        }
+        else {
+            throw UnsupportedOperationException("Incompatible element sizes!")
+        }
+
+        return alloc
+    }
+
+    operator fun div(other: Stackable): Stackable {
+        val ktcode = getKTCode()
+
+        val alloc = ktcode.alloc(getElemSize() * ktcode.elemSize)
+
+        if (other.getElemSize() == 1) {
+            repeat(getElemSize()) {
+                putOntoStack(it)
+                other.putOntoStack()
+                ktcode.div()
+                alloc.loadFromStack(it)
+            }
+        }
+        else if (other.getElemSize() == getElemSize()) {
+            repeat(getElemSize()) {
+                putOntoStack(it)
+                other.putOntoStack(it)
+                ktcode.div()
+                alloc.loadFromStack(it)
+            }
+        }
+        else {
+            throw UnsupportedOperationException("Incompatible element sizes!")
+        }
+
+        return alloc
+    }
+
+    operator fun rem(other: Stackable): Stackable {
+        val ktcode = getKTCode()
+
+        val alloc = ktcode.alloc(getElemSize() * ktcode.elemSize)
+
+        if (other.getElemSize() == 1) {
+            repeat(getElemSize()) {
+                putOntoStack(it)
+                other.putOntoStack()
+                ktcode.mod()
+                alloc.loadFromStack(it)
+            }
+        }
+        else if (other.getElemSize() == getElemSize()) {
+            repeat(getElemSize()) {
+                putOntoStack(it)
+                other.putOntoStack(it)
+                ktcode.mod()
+                alloc.loadFromStack(it)
+            }
+        }
+        else {
+            throw UnsupportedOperationException("Incompatible element sizes!")
+        }
+
+        return alloc
+    }
+
+    operator fun plus(other: Int): Stackable {
+        val ktcode = getKTCode()
+
+        val alloc = ktcode.alloc(getElemSize() * ktcode.elemSize)
+
+        repeat(getElemSize()) {
+            putOntoStack(it)
+            ktcode.loadImm(other)
+            ktcode.add()
+            alloc.loadFromStack(it)
+        }
+
+        return alloc
+    }
+
+    operator fun minus(other: Int): Stackable {
+        val ktcode = getKTCode()
+
+        val alloc = ktcode.alloc(getElemSize() * ktcode.elemSize)
+
+        repeat(getElemSize()) {
+            putOntoStack(it)
+            ktcode.loadImm(other)
+            ktcode.sub()
+            alloc.loadFromStack(it)
+        }
+
+        return alloc
+    }
+
+    operator fun times(other: Int): Stackable {
+        val ktcode = getKTCode()
+
+        val alloc = ktcode.alloc(getElemSize() * ktcode.elemSize)
+
+        repeat(getElemSize()) {
+            putOntoStack(it)
+            ktcode.loadImm(other)
+            ktcode.mul()
+            alloc.loadFromStack(it)
+        }
+
+        return alloc
+    }
+
+    operator fun div(other: Int): Stackable {
+        val ktcode = getKTCode()
+
+        val alloc = ktcode.alloc(getElemSize() * ktcode.elemSize)
+
+        repeat(getElemSize()) {
+            putOntoStack(it)
+            ktcode.loadImm(other)
+            ktcode.div()
+            alloc.loadFromStack(it)
+        }
+
+        return alloc
+    }
+
+    operator fun rem(other: Int): Stackable {
+        val ktcode = getKTCode()
+
+        val alloc = ktcode.alloc(getElemSize() * ktcode.elemSize)
+
+        repeat(getElemSize()) {
+            putOntoStack(it)
+            ktcode.loadImm(other)
+            ktcode.mod()
+            alloc.loadFromStack(it)
+        }
+
+        return alloc
+    }
+
+    operator fun unaryMinus(): Stackable {
+        val ktcode = getKTCode()
+
+        val alloc = ktcode.alloc(getElemSize() * ktcode.elemSize)
+
+        repeat(getElemSize()) {
+            putOntoStack(it)
+            ktcode.negate()
+            alloc.loadFromStack(it)
+        }
+
+        return alloc
     }
 
 }
