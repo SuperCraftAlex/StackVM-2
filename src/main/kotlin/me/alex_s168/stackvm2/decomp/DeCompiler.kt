@@ -6,7 +6,7 @@ import me.alex_s168.stackvm2.inst.Instructions
 object DeCompiler {
 
     fun decomp(code: String, origMem: IntArray): String =
-        stage3(stage2(stage1(stage0(prep(code)))), origMem)
+        stage3(stage2(stage1(stage0(prep(code)))), origMem).trim()
 
     private fun isExpr(line: String): Boolean {
         val args = line.trim().split(" ")
@@ -257,24 +257,28 @@ object DeCompiler {
                 val nextArgs = lines[i + 1].trim().split(" ")
                 val nextNextArgs = lines[i + 2].trim().split(" ")
 
-                val inst = Instructions.getInst(args[0])!!
-                val nextInst = Instructions.getInst(nextArgs[0])!!
-                val nextNextInst = Instructions.getInst(nextNextArgs[0])!!
+                val inst = Instructions.getInst(args[0])
+                val nextInst = Instructions.getInst(nextArgs[0])
+                val nextNextInst = Instructions.getInst(nextNextArgs[0])
 
-                if (   (InstructionProperties.ONLY_PUSH in inst.properties && inst.argCount == 1)
-                    && (InstructionProperties.ONLY_PUSH in nextInst.properties && nextInst.argCount == 1)
-                    && InstructionProperties.OP_2_1 in nextNextInst.properties
+                if (inst != null && nextInst != null && nextNextInst != null) {
+
+                    if ((InstructionProperties.ONLY_PUSH in inst.properties && inst.argCount == 1)
+                        && (InstructionProperties.ONLY_PUSH in nextInst.properties && nextInst.argCount == 1)
+                        && InstructionProperties.OP_2_1 in nextNextInst.properties
                     ) {
 
-                    sb.append(nextNextInst.name)
-                    sb.append(' ')
-                    sb.append(nextArgs[1])
-                    sb.append(' ')
-                    sb.append(args[1])
-                    sb.append("\n")
+                        sb.append(nextNextInst.name)
+                        sb.append(' ')
+                        sb.append(nextArgs[1])
+                        sb.append(' ')
+                        sb.append(args[1])
+                        sb.append("\n")
 
-                    i += 3
-                    continue
+                        i += 3
+                        continue
+
+                    }
 
                 }
             }

@@ -2,8 +2,6 @@ package me.alex_s168.stackvm2.ktcode.`var`
 
 import me.alex_s168.stackvm2.inst.Instructions
 import me.alex_s168.stackvm2.ktcode.KTCode
-import java.util.Objects
-import java.util.Random
 import kotlin.math.max
 
 open class MemoryAllocation(
@@ -52,7 +50,7 @@ open class MemoryAllocation(
     }
 
     override fun putOntoStack() {
-        if (this !in ktcode.memAllocs)
+        if (this !in ktcode.romAllocs)
             throw IllegalArgumentException("Cannot load from unallocated memory!")
 
         repeat(eAm) {

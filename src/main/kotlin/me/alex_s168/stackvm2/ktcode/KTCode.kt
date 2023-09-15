@@ -18,7 +18,7 @@ open class KTCode(
 
     var prog: (KTCode) -> Unit = {}
 
-    val memAllocs = LockableArrayList<MemoryAllocation>()
+    val romAllocs = LockableArrayList<MemoryAllocation>()
     val unresolvedReferences = LockableArrayList<Pair<Int, MemoryAllocation>>()
     val unresolvedReferences3 = LockableArrayList<Triple<Int, MemoryAllocation, Int>>()
     val funcs = LockableArrayList<VMFunction>()
@@ -31,7 +31,7 @@ open class KTCode(
     override fun lock() {
         super.lock()
 
-        memAllocs.lock()
+        romAllocs.lock()
         unresolvedReferences.lock()
         unresolvedReferences3.lock()
         funcs.lock()
@@ -44,20 +44,20 @@ open class KTCode(
     fun static(value: Char): StaticValue =
         static(value.code)
 
-    fun alloc(
+    fun const(
         size: Int,
         init: IntArray = IntArray(max(1, size / elemSize)) { 0 }
-    ): MutableMemoryAllocation {
+    ): MemoryAllocation {
         if (locked) {
             throw IllegalStateException("Code is locked!")
         }
 
         return MutableMemoryAllocation(this, max(1, size / elemSize), initVal = init).also {
-            memAllocs.add(it)
+            romAllocs.add(it)
         }
     }
 
-    fun ram(size: Int): RAMAllocation {
+    fun alloc(size: Int): RAMAllocation {
         if (locked)
             throw IllegalStateException("Code is locked!")
 
@@ -66,10 +66,13 @@ open class KTCode(
         }
     }
 
-    fun intVar(value: Int = 0): MutableMemoryAllocation =
-        alloc(elemSize, intArrayOf(value))
+    fun intVar(value: Int = 0): MutableMemoryAllocation<*> =
+        alloc(elemSize).also {
+            loadImm(value)
+            store(it)
+        }
 
-    fun charVar(value: Char = ' '): MutableMemoryAllocation =
+    fun charVar(value: Char = ' '): MutableMemoryAllocation<*> =
         intVar(value.code)
 
     fun getTop(): MemoryAllocation {
@@ -136,10 +139,6 @@ open class KTCode(
             throw IllegalStateException("Code is locked!")
         }
 
-        if (!memAllocs.contains(alloc)) {
-            throw IllegalArgumentException("Cannot call unallocated memory!")
-        }
-
         mem += Instructions.CALL.id
         unresolvedReferences.add(mem.size to alloc)
         mem += 0
@@ -151,10 +150,6 @@ open class KTCode(
     fun callCond(alloc: MemoryAllocation) {
         if (locked) {
             throw IllegalStateException("Code is locked!")
-        }
-
-        if (!memAllocs.contains(alloc)) {
-            throw IllegalArgumentException("Cannot call unallocated memory!")
         }
 
         mem += Instructions.CALL_COND.id
@@ -274,8 +269,8 @@ open class KTCode(
         for ((i, f) in funcs.withIndex()) {
             allocs[f.memAlloc] = mem.size
 
-            val al = MutableMemoryAllocation(this, 1, (-i).toLong())
-            memAllocs.add(al)
+            val al = RAMAllocation(this, 1, (-i).toLong())
+            ramAllocs.add(al)
             store(al)
 
             callStack.push(al)
@@ -288,7 +283,7 @@ open class KTCode(
                 ret()
         }
 
-        for (alloc in memAllocs) {
+        for (alloc in romAllocs) {
             allocs[alloc] = mem.size
             mem.addAll(alloc.initVal.asIterable())
         }

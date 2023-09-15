@@ -4,7 +4,7 @@ import me.alex_s168.stackvm2.inst.Instructions
 import me.alex_s168.stackvm2.ktcode.KTCode
 import kotlin.math.max
 
-open class MutableMemoryAllocation(
+open class MutableMemoryAllocation<T : MutableMemoryAllocation<T>>(
     ktcode: KTCode,
     size: Int,
     uuid: Long = 0,
@@ -14,7 +14,7 @@ open class MutableMemoryAllocation(
     size,
     uuid,
     initVal
-), MutableStackable<MutableMemoryAllocation> {
+), MutableStackable<T> {
 
     override var value: Stackable
         get() = this
@@ -38,7 +38,7 @@ open class MutableMemoryAllocation(
     }
 
     override fun loadFromStack() {
-        if (this !in ktcode.memAllocs)
+        if (this !in ktcode.romAllocs)
             throw IllegalArgumentException("Cannot store to unallocated memory!")
 
         repeat(eAm) {

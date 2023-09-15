@@ -1,7 +1,5 @@
 package me.alex_s168.stackvm2.ktcode.`var`
 
-import me.alex_s168.stackvm2.ktcode.exception.UnsupportedOperationException
-
 @Suppress("UNCHECKED_CAST")
 interface MutableStackable<T: MutableStackable<T>>: Stackable {
 

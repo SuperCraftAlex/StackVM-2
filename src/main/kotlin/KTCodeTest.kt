@@ -34,7 +34,7 @@ object KTCodeTest {
                 c.ret(args[0] + args[1])
             }
 
-            var a = c.ram(1)
+            var a = c.intVar(1)
             a ++
 
             addFunc(9, -a)
@@ -43,13 +43,12 @@ object KTCodeTest {
                 c.load(69)
             }
 
-
             c.interrupt(StandardInterrupts.EXIT)
         }
 
-        val mem = SegmentedMemory.of(layout)
-
-        mem.set(512, comp, skip = 512)
+        val mem = SegmentedMemory.of(layout).also {
+            it.set(512, comp, skip = 512)
+        }.finalize()
 
         println("Program size: ${comp.size - 512} elements")
 
@@ -59,9 +58,9 @@ object KTCodeTest {
             StandardInterrupts.getInterruptTable()
         )
 
-        val disasm = DisAssembler(comp, 512)
-        //println("Decompiled:")
-        println(DeCompiler.decomp(disasm.disassemble(), comp.toList().stream().skip(512).toList().toIntArray()))
+        println("Decompiled:")
+        println(DeCompiler.decomp(DisAssembler(comp, 512).disassemble(), comp.toList().stream().skip(512).toList().toIntArray()))
+        println()
 
         println("Started VM!")
         while (vm.running) {
@@ -70,6 +69,7 @@ object KTCodeTest {
         }
 
         println("Took ${vm.ticksElapsed()} ticks to execute!")
+        println(vm)
     }
 
 }

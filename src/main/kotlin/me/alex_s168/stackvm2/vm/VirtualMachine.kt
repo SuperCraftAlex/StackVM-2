@@ -4,6 +4,7 @@ import me.alex_s168.ktlib.counter.UpCounter
 import me.alex_s168.stackvm2.inst.Instructions
 import me.alex_s168.stackvm2.vm.mem.Memory
 import kotlin.math.abs
+import kotlin.math.min
 
 class VirtualMachine(
     private val mem: Memory,
@@ -187,6 +188,20 @@ class VirtualMachine(
         }
 
         pc ++
+    }
+
+    override fun toString(): String {
+        val sb = StringBuilder("VirtualMachine(pc=$pc, sp=$sp, condF=$condF, running=$running, stack=[")
+
+        for (i in 0..<min(6, sp)) {
+            if (i != 0) {
+                sb.append(", ")
+            }
+            sb.append(mem[sp - i - 1])
+        }
+
+        sb.append("])")
+        return sb.toString()
     }
 
     fun debug() {
