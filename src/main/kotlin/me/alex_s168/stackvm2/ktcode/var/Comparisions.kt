@@ -19,7 +19,7 @@ infix fun Stackable.eq(value: Any?): Stackable {
             ktcode.pushCf()
         }
 
-        return ktcode.getCf()
+        return ktcode.getTop()
     }
 
     if (value is Int) {

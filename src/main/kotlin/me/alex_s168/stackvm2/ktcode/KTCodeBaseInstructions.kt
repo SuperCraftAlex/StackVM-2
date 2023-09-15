@@ -81,7 +81,7 @@ open class KTCodeBaseInstructions(
         mem += address
     }
 
-    fun JumpCond(address: Int) {
+    fun jumpCond(address: Int) {
         if (locked) {
             throw IllegalStateException("Code is locked!")
         }

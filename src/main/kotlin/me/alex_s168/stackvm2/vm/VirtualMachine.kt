@@ -93,9 +93,8 @@ class VirtualMachine(
             }
 
             Instructions.LD_IMM.id 		-> {
-                mem[sp] = mem[pc + 1]
+                push(mem[pc + 1])
                 pc ++
-                sp ++
             }
             Instructions.LD_ADDR.id		-> {
                 mem[sp] = mem[mem[pc + 1]]

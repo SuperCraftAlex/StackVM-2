@@ -10,6 +10,13 @@ object KTCodeTest {
     fun main(args: Array<String>) {
         val code = object : KTCode(offset = 512, elemSize = VirtualMachine.ELEMENT_SIZE) {
             override fun prog() {
+                var arr = alloc(10 * elemSize)
+                arr[3] = static(69)
+                arr[2] = static(69)
+
+                load(arr[3] eq arr[2])
+
+                /*
                 val addFunc = func(2) {
                     add()
                 }
@@ -19,14 +26,21 @@ object KTCodeTest {
 
                 addFunc(9, -a)
 
-                getTop() eq 7
+                cond(getTop() eq 7) {
+                    load(69)
+                }
+                 */
 
                 interrupt(StandardInterrupts.EXIT)
             }
         }
 
+        val comp = code.compile()
+
+        println("Program size: ${comp.size - 512} elements")
+
         val vm = VirtualMachine(
-            SimpleMemory(code.compile()),
+            SimpleMemory(comp),
             StandardInterrupts.getInterruptTable()
         )
 

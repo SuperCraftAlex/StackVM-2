@@ -167,7 +167,7 @@ interface MutableStackable<T: MutableStackable<T>>: Stackable {
         val ktcode = getKTCode()
 
         if (index >= getElemSize()) {
-            throw IndexOutOfBoundsException("Index $index is out of bounds for $this!")
+            throw IndexOutOfBoundsException("Index $index is out of bounds for array!")
         }
 
         ktcode.loadImm(value)
@@ -176,11 +176,11 @@ interface MutableStackable<T: MutableStackable<T>>: Stackable {
 
     operator fun set(index: Int, value: Stackable) {
         if (index >= getElemSize()) {
-            throw IndexOutOfBoundsException("Index $index is out of bounds for $this!")
+            throw IndexOutOfBoundsException("Index $index is out of bounds for array!")
         }
 
         value.putOntoStack()
-        loadFromStack()
+        loadFromStack(index)
     }
 
     operator fun set(index: Stackable, value: Int) {

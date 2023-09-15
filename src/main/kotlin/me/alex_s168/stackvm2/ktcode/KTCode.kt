@@ -22,8 +22,8 @@ abstract class KTCode(
     val funcs = LockableArrayList<VMFunction>()
     val callStack = LockableStack<MemoryAllocation>()
 
-    val TRUE = intVar(1)
-    val FALSE = intVar(0)
+    val TRUE = static(1)
+    val FALSE = static(0)
 
     override fun lock() {
         super.lock()
@@ -39,10 +39,11 @@ abstract class KTCode(
         this.call(*args)
     }
 
-    fun static(
-        value: Int,
-    ): StaticValue =
+    fun static(value: Int, ): StaticValue =
         StaticValue(this, value)
+
+    fun static(value: Char): StaticValue =
+        static(value.code)
 
     fun alloc(
         size: Int,
@@ -82,6 +83,38 @@ abstract class KTCode(
             pushCf()
             store(it)
         }
+    }
+
+    fun cond(cond: Stackable): Stackable =
+        cond
+
+    fun cond(cond: Stackable, block: () -> Unit): Stackable {
+        cond.putOntoStack()
+        popCf()
+        not()
+
+        mem += Instructions.JUMP_COND.id
+        val old = mem.size
+        mem += 0
+
+        block()
+
+        mem[old] = mem.size
+
+        return cond
+    }
+
+    fun Stackable.otherwise(block: () -> Unit) {
+        putOntoStack()
+        popCf()
+
+        mem += Instructions.JUMP_COND.id
+        val old = mem.size
+        mem += 0
+
+        block()
+
+        mem[old] = mem.size
     }
 
     fun cmpEq() {

@@ -16,7 +16,7 @@ open class MemoryAllocation(
     open val value: Stackable
         get() = this
 
-    val eAm = max(1, size / ktcode.elemSize)
+    val eAm = size
 
     fun load(index: Int) {
         if (index > eAm)
