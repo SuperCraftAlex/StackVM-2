@@ -13,7 +13,7 @@ class RAMAllocation(
     size,
     uuid,
     IntArray(max(0, size)) { 0 }
-), MutableStackable<MutableMemoryAllocation> {
+), MutableStackable<RAMAllocation> {
 
     override fun putOntoStack() {
         if (this !in ktcode.ramAllocs)
