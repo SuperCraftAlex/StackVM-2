@@ -1,6 +1,7 @@
 package me.alex_s168.stackvm2.ktcode
 
 import me.alex_s168.stackvm2.inst.Instructions
+import me.alex_s168.stackvm2.ktcode.`var`.MemoryAllocation
 import java.util.*
 
 class VMFunction (

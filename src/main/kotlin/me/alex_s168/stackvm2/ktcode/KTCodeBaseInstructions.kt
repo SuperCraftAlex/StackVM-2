@@ -133,7 +133,6 @@ open class KTCodeBaseInstructions(
         mem += value
     }
 
-
     fun loadAddr(address: Int) {
         if (locked) {
             throw IllegalStateException("Code is locked!")

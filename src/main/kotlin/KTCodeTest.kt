@@ -1,4 +1,5 @@
 import me.alex_s168.stackvm2.ktcode.KTCode
+import me.alex_s168.stackvm2.ktcode.`var`.eq
 import me.alex_s168.stackvm2.std.StandardInterrupts
 import me.alex_s168.stackvm2.vm.VirtualMachine
 import me.alex_s168.stackvm2.vm.mem.SimpleMemory
@@ -17,6 +18,8 @@ object KTCodeTest {
                 a ++
 
                 addFunc(9, -a)
+
+                getTop() eq 7
 
                 interrupt(StandardInterrupts.EXIT)
             }

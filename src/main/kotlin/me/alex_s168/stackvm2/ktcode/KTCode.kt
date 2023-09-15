@@ -3,6 +3,7 @@ package me.alex_s168.stackvm2.ktcode
 import me.alex_s168.ktlib.collection.LockableArrayList
 import me.alex_s168.ktlib.collection.LockableStack
 import me.alex_s168.stackvm2.inst.Instructions
+import me.alex_s168.stackvm2.ktcode.`var`.*
 import java.util.*
 import kotlin.math.max
 
@@ -10,6 +11,8 @@ abstract class KTCode(
     offset: Int,
     val elemSize: Int
 ): KTCodeBaseInstructions(offset) {
+
+    val random = Random()
 
     abstract fun prog()
 
@@ -36,37 +39,29 @@ abstract class KTCode(
         this.call(*args)
     }
 
-    fun alloc(size: Int): MemoryAllocation {
+    fun static(
+        value: Int,
+    ): StaticValue =
+        StaticValue(this, value)
+
+    fun alloc(
+        size: Int,
+        init: IntArray = IntArray(max(1, size / elemSize)) { 0 }
+    ): MutableMemoryAllocation {
         if (locked) {
             throw IllegalStateException("Code is locked!")
         }
 
-        return MemoryAllocation(this, size).also {
+        return MutableMemoryAllocation(this, max(1, size / elemSize), initVal = init).also {
             memAllocs.add(it)
         }
     }
 
-    fun intVar(value: Int = 0): MemoryAllocation {
-        if (locked) {
-            throw IllegalStateException("Code is locked!")
-        }
+    fun intVar(value: Int = 0): MutableMemoryAllocation =
+        alloc(elemSize, intArrayOf(value))
 
-        return alloc(elemSize).also {
-            loadImm(value)
-            store(it)
-        }
-    }
-
-    fun charVar(value: Char = 'a'): MemoryAllocation {
-        if (locked) {
-            throw IllegalStateException("Code is locked!")
-        }
-
-        return alloc(1).also {
-            loadImm(value.toInt())
-            store(it)
-        }
-    }
+    fun charVar(value: Char = ' '): MutableMemoryAllocation =
+        intVar(value.code)
 
     fun getTop(): MemoryAllocation {
         if (locked) {
@@ -74,7 +69,7 @@ abstract class KTCode(
         }
 
         return alloc(elemSize).also {
-            load(it)
+            it.loadFromStack()
         }
     }
 
@@ -95,6 +90,7 @@ abstract class KTCode(
         }
 
         sub()
+        popCf()
         not()
     }
 
@@ -187,52 +183,18 @@ abstract class KTCode(
     fun load(value: Int) =
         loadImm(value)
 
-    fun load(alloc: MemoryAllocation) {
+    fun load(alloc: Stackable) {
         if (locked)
             throw IllegalStateException("Code is locked!")
 
-        if (!memAllocs.contains(alloc))
-            throw IllegalArgumentException("Cannot load from unallocated memory!")
-
-        //if (mem.size < 2 || mem[mem.size-2] != Instructions.ST_ADDR.id)
-        //    lastStored = null
-//
-        //if (alloc == lastStored) {
-        //    mem.removeLast()
-        //    mem.removeLast()
-        //    dup()
-        //    store(alloc)
-        //    return
-        //}
-
-        repeat(alloc.eAm) {
-            mem += Instructions.LD_ADDR.id
-            unresolvedReferences.add(mem.size to alloc)
-            mem += 0
-        }
-
-        lastStored = null
+        alloc.putOntoStack()
     }
 
-    private var lastStored: MemoryAllocation? = null
-
-    fun store(alloc: MemoryAllocation) {
+    fun store(alloc: MutableStackable<*>) {
         if (locked)
             throw IllegalStateException("Code is locked!")
 
-        if (!memAllocs.contains(alloc))
-            throw IllegalArgumentException("Cannot store to unallocated memory!")
-
-        repeat(alloc.eAm) {
-            mem += Instructions.ST_ADDR.id
-            unresolvedReferences.add(mem.size to alloc)
-            mem += 0
-        }
-
-        if (alloc.eAm > 1)
-            rotateTop(alloc.eAm - 1)
-
-        lastStored = alloc
+        alloc.loadFromStack()
     }
 
     fun rotateTop(amount: Int) {
@@ -268,9 +230,9 @@ abstract class KTCode(
 
         for ((i, f) in funcs.withIndex()) {
             allocs[f.memAlloc] = mem.size
-            val al = MemoryAllocation(this, elemSize, (-i).toLong())
-            memAllocs.add(al)
 
+            val al = MutableMemoryAllocation(this, 1, (-i).toLong())
+            memAllocs.add(al)
             store(al)
 
             callStack.push(al)
@@ -280,7 +242,7 @@ abstract class KTCode(
 
         for (alloc in memAllocs) {
             allocs[alloc] = mem.size
-            repeat(alloc.size) { mem += 0 }
+            mem.addAll(alloc.initVal.asIterable())
         }
 
         for ((where, alloc) in unresolvedReferences) {
@@ -292,6 +254,7 @@ abstract class KTCode(
         }
 
         lock()
+
         return mem.toIntArray()
     }
 
