@@ -50,6 +50,7 @@ fun main(argsIn: Array<String>) {
     }
 
     when (op) {
+        //link test.o -exec -o test.svm
         "link" -> {
             if (opArgs.size < 1) {
                 System.err.println("Invalid number of arguments for operation: $op!")
@@ -65,12 +66,14 @@ fun main(argsIn: Array<String>) {
                 }
             }
 
+            val entryPoint = args["-entryPos"]?.getOrNull(0)?.toIntOrNull() ?: 512
+
             val formats = files.map {
                 val bytes = it.readBytes()
                 LinkableFormat.from(ByteBuffer.wrap(bytes))
             }
 
-            val linkable = LinkableFormat.empty()
+            val linkable = LinkableFormat.empty(off = entryPoint)
             formats.forEach {
                 try {
                     linkable.linkWith(it)
@@ -82,7 +85,6 @@ fun main(argsIn: Array<String>) {
 
             if ("-exec" in args) {
                 val entry = args["-entry"]?.getOrNull(0) ?: "_start"
-                val entryPoint = args["-entryPos"]?.getOrNull(0)?.toIntOrNull() ?: 512
                 val target = args["-target"]?.getOrNull(0) ?: VirtualMachine.TARGET_STRING
                 val isaVersion = args["-isa"]?.getOrNull(0) ?: VirtualMachine.ISA_VERSION
                 val ramOff = args["-ram"]?.getOrNull(0)?.toIntOrNull() ?: (entryPoint + linkable.code.size)
@@ -111,7 +113,7 @@ fun main(argsIn: Array<String>) {
 
                 linkable.code = intArrayOf(
                     Targets.getJumpInst(targetRef),
-                    linkable.labels[entry]!!
+                    linkable.labels[entry]!! + 2
                 ) + linkable.code
 
                 val out = File(args["-o"]?.getOrNull(0) ?: "a.svm")
@@ -219,8 +221,8 @@ fun main(argsIn: Array<String>) {
 
             val layout = MemoryLayout.new()
                 .ram(0..<exec.entryPoint)
-                .rom(exec.entryPoint..<exec.code.size)
-                .ram(exec.code.size..<exec.code.size+ramsize)
+                .rom(exec.entryPoint..<exec.entryPoint+exec.code.size)
+                .ram(exec.entryPoint+exec.code.size..<exec.entryPoint+exec.code.size+ramsize)
                 .build()
 
             val mem = SegmentedMemory.of(layout).also {
@@ -248,5 +250,14 @@ fun main(argsIn: Array<String>) {
 }
 
 private fun showHelp() {
-    TODO()
+    println("StackVM2 CLI")
+    println("Usage: svm <operation> [args]")
+    println()
+    println("Operations:")
+    println("  link <files> -o <output file> [-entry <entry label name>] [-entryPos <entry pos>] [-target <target>] [-isa <isa version>] [-ram <ram size>] [-exec]")
+    println("    (\"-exec\" generates an executable file instead of a linkable file)")
+    println("  asm <file> [-o <output file>]")
+    println("  run <file> [-ram <ram size>]")
+    println()
+    println("Found any bugs or need help? Go to https://github.com/SuperCraftAlex/StackVM-2")
 }

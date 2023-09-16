@@ -7,7 +7,9 @@ class LinkableFormat(
     val labels: HashMap<String, Int>,
     val unresolved: MutableList<Pair<Int, String>>,
 
-    var code: IntArray
+    var code: IntArray,
+
+    val offset: Int = 0
 ) {
 
     fun linkWith(labels: HashMap<String, Int>) =
@@ -18,7 +20,7 @@ class LinkableFormat(
         code += other.code
 
         other.labels.toList().forEach { (k, v) ->
-            val addr = v + off
+            val addr = offset + v + off
 
             if (k in labels)
                 throw GlobalLabelAlreadyDefinedException("Label $k already defined!")
@@ -27,7 +29,7 @@ class LinkableFormat(
         }
 
         for ((where, name) in unresolved.toList()) {
-            val addr = labels[name] ?: continue
+            val addr = offset + (labels[name] ?: continue)
             code[where] = addr
             unresolved.remove(where to name)
         }
@@ -39,7 +41,7 @@ class LinkableFormat(
                 unresolved.add(whereReal to name)
                 continue
             }
-            code[whereReal] = addr
+            code[whereReal] = offset + addr
         }
     }
 
@@ -83,31 +85,27 @@ class LinkableFormat(
 
     companion object {
 
-        fun empty(): LinkableFormat =
-            LinkableFormat(HashMap(), mutableListOf(), IntArray(0))
+        fun empty(off: Int = 0): LinkableFormat =
+            LinkableFormat(HashMap(), mutableListOf(), IntArray(0), off)
 
         fun from(buf: ByteBuffer): LinkableFormat {
             val labels = HashMap<String, Int>()
             val unresolved = mutableListOf<Pair<Int, String>>()
 
             repeat(buf.getInt()) {
-                val key = StringBuilder()
-                repeat(buf.getInt()) {
-                    key.append(buf.getChar())
-                }
+                val key = ByteArray(buf.getInt())
+                buf.get(key)
 
-                labels[key.toString()] = buf.getInt()
+                labels[String(key)] = buf.getInt()
             }
 
             repeat(buf.getInt()) {
                 val where = buf.getInt()
 
-                val name = StringBuilder()
-                repeat(buf.getInt()) {
-                    name.append(buf.getChar())
-                }
+                val name = ByteArray(buf.getInt())
+                buf.get(name)
 
-                unresolved.add(where to name.toString())
+                unresolved.add(where to String(name))
             }
 
             val code = IntArray(buf.remaining() / 4)
