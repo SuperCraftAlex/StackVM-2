@@ -4,13 +4,15 @@ import me.alex_s168.stackvm2.asm.Assembler
 import me.alex_s168.stackvm2.common.MemoryLayout
 import me.alex_s168.stackvm2.format.ExecutableFormant
 import me.alex_s168.stackvm2.format.LinkableFormat
+import me.alex_s168.stackvm2.inst.Instructions
 import me.alex_s168.stackvm2.std.StandardInterrupts
-import me.alex_s168.stackvm2.target.TargetRef
-import me.alex_s168.stackvm2.target.Targets
+import me.alex_s168.stackvm2.target.cfgfile.TargetConfigFiles
+import me.alex_s168.stackvm2.target.matchesTargetString
 import me.alex_s168.stackvm2.vm.VirtualMachine
 import me.alex_s168.stackvm2.vm.mem.SegmentedMemory
 import java.io.File
 import java.nio.ByteBuffer
+import kotlin.io.path.Path
 import kotlin.system.exitProcess
 
 val HELP_ARG_OPS = arrayOf("help", "h")
@@ -50,21 +52,24 @@ fun main(argsIn: Array<String>) {
     }
 
     when (op) {
-        //link test.o -exec -o test.svm
         "link" -> {
             if (opArgs.size < 1) {
                 System.err.println("Invalid number of arguments for operation: $op!")
                 exitProcess(1)
             }
 
-            val files = opArgs.map {
-                File(it).also {
+            val files = opArgs.map { str ->
+                File(str).also {
                     if (!it.exists()) {
                         System.err.println("File does not exist: ${it.absolutePath}!")
                         exitProcess(1)
                     }
                 }
+            }.filter {
+                it.extension == "o"
             }
+
+            TargetConfigFiles.index(Path(""))
 
             val entryPoint = args["-entryPos"]?.getOrNull(0)?.toIntOrNull() ?: 512
 
@@ -85,23 +90,41 @@ fun main(argsIn: Array<String>) {
 
             if ("-exec" in args) {
                 val entry = args["-entry"]?.getOrNull(0) ?: "_start"
-                val target = args["-target"]?.getOrNull(0) ?: VirtualMachine.TARGET_STRING
+                val targetStr = args["-target"]?.getOrNull(0) ?: VirtualMachine.TARGET_STRING
                 val isaVersion = args["-isa"]?.getOrNull(0) ?: VirtualMachine.ISA_VERSION
-                val ramOff = args["-ram"]?.getOrNull(0)?.toIntOrNull() ?: (entryPoint + linkable.code.size)
+
+                val target = TargetConfigFiles.find(targetStr)
+                    ?: (if (File(targetStr).isFile && File(targetStr).extension == "target") (TargetConfigFiles.read(File(targetStr))) else null)
+
+                if (target == null) {
+                    System.err.println("Target not found: $targetStr!")
+                    exitProcess(1)
+                }
+
+                val layout = target.layout(entryPoint, linkable.code.size, args["-ram"]?.getOrNull(0)?.toIntOrNull() ?: 1024)
+
+                val reg = layout.getRamRegionsSortedExceptZero().firstOrNull()
+
+                if (reg == null) {
+                    System.err.println("Target is configured incorrectly: No RAM region found!")
+                    exitProcess(1)
+                }
+
+                val ramOff = reg.start
 
                 val special = HashMap<String, Int>()
 
                 special["_ENTRY_"] = entryPoint
-                special["_TARGET_"] = target.hashCode()
+                special["_TARGET_"] = targetStr.substringAfterLast('/').substringBeforeLast('.').hashCode()
                 special["_ISA_"] = isaVersion.hashCode()
                 special["_RAM_"] = ramOff
 
-                val targetRef = TargetRef.from(target)
+                target.interrupts.forEach { (k, v) ->
+                    special["_INT_$k"] = v
+                }
 
-                val interrupts = Targets.getInterruptTable(targetRef)
-
-                interrupts.forEach { (k, v) ->
-                    special["_INT_${v.first}"] = k
+                target.labels.forEach { (k, v) ->
+                    special[k] = v
                 }
 
                 linkable.linkWith(special)
@@ -112,9 +135,17 @@ fun main(argsIn: Array<String>) {
                 }
 
                 linkable.code = intArrayOf(
-                    Targets.getJumpInst(targetRef),
+                    Instructions.JUMP.id,
                     linkable.labels[entry]!! + 2
                 ) + linkable.code
+
+                if (linkable.unresolved.size > 0) {
+                    System.err.println("Unresolved labels:")
+                    linkable.unresolved.forEach { (k, v) ->
+                        System.err.println("- \"$k\" at $v")
+                    }
+                    exitProcess(1)
+                }
 
                 val out = File(args["-o"]?.getOrNull(0) ?: "a.svm")
 
@@ -123,7 +154,7 @@ fun main(argsIn: Array<String>) {
 
                 val exec = ExecutableFormant(
                     isaVersion,
-                    target,
+                    targetStr,
                     entryPoint,
                     linkable.code
                 )
@@ -208,18 +239,32 @@ fun main(argsIn: Array<String>) {
                 System.err.println("File does not exist: ${file.absolutePath}!")
                 exitProcess(1)
             }
+
+            TargetConfigFiles.index(file.toPath().parent ?: Path(""))
+            TargetConfigFiles.index(Path(""))
+
             val bytes = file.readBytes()
             val exec = ExecutableFormant.from(ByteBuffer.wrap(bytes))
 
             if (exec.isaVersion != VirtualMachine.ISA_VERSION)
                 System.err.println("Warning: ISA version mismatch! Expected ${VirtualMachine.ISA_VERSION}, got ${exec.isaVersion}!")
 
-            if (exec.targetString != VirtualMachine.TARGET_STRING)
+            if (!exec.targetString.matchesTargetString(VirtualMachine.TARGET_STRING))
                 System.err.println("Warning: Target mismatch! Expected ${VirtualMachine.TARGET_STRING}, got ${exec.targetString}!")
 
             val ramsize = args["-ram"]?.getOrNull(0)?.toInt() ?: 1024
 
-            val layout = MemoryLayout.new()
+            val layout = if ("-target" in args) (
+                TargetConfigFiles.find(args["-target"]!![0]) ?: (
+                    if (File(args["-target"]!![0]).isFile && File(args["-target"]!![0]).extension == "target") (
+                        TargetConfigFiles.read(File(args["-target"]!![0]))
+                    ) else null
+                ) ?: throw Exception("Target not found: ${args["-target"]!![0]}!")
+            ).layout(
+                    exec.entryPoint,
+                    exec.code.size,
+                    ramsize
+            ) else MemoryLayout.new()
                 .ram(0..<exec.entryPoint)
                 .rom(exec.entryPoint..<exec.entryPoint+exec.code.size)
                 .ram(exec.entryPoint+exec.code.size..<exec.entryPoint+exec.code.size+ramsize)
@@ -254,10 +299,11 @@ private fun showHelp() {
     println("Usage: svm <operation> [args]")
     println()
     println("Operations:")
-    println("  link <files> -o <output file> [-entry <entry label name>] [-entryPos <entry pos>] [-target <target>] [-isa <isa version>] [-ram <ram size>] [-exec]")
+    println("  link <files> -o <output file> [-entry <entry label name>] [-entryPos <entry pos>] [-target <target>] [-isa <isa version>] [-exec]")
     println("    (\"-exec\" generates an executable file instead of a linkable file)")
     println("  asm <file> [-o <output file>]")
-    println("  run <file> [-ram <ram size>]")
+    println("  run <file> [-ram <ram size>] [-target <target>]")
+    println("    (\"-target <target>\" specifies the memory layout to use)")
     println()
     println("Found any bugs or need help? Go to https://github.com/SuperCraftAlex/StackVM-2")
 }

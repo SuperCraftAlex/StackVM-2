@@ -49,7 +49,7 @@ class LinkableFormat(
         var size = 0
 
         size += 4
-        for ((k, v) in labels) {
+        for ((k, _) in labels) {
             size += 8
             size += k.length
         }

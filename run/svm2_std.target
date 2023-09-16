@@ -1,0 +1,16 @@
+for: svm:2.0.*:std
+
+
+int: put_char  = 1
+int: get_char  = 2
+int: exit      = 33
+
+
+# rom from a0 to the entry point of the prog
+ram: 0->E
+
+# rom from the entry point of the prog to the entry point of the program + the size of it
+rom: E->ES
+
+# ram from the entry point of the program + the size of it to the ram config argument
+ram: ES->ESR

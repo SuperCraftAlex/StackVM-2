@@ -5,6 +5,12 @@ class MemoryLayout(
     val ramRegions: List<MemoryRegion>
 ) {
 
+    fun getRamRegionsSorted(): List<MemoryRegion> =
+        ramRegions.sortedBy { it.start }
+
+    fun getRamRegionsSortedExceptZero(): List<MemoryRegion> =
+        getRamRegionsSorted().filter { it.start != 0 }
+
     class Builder {
 
         private val ramRegions = ArrayList<MemoryRegion>()
