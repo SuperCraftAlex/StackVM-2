@@ -6,7 +6,7 @@ import me.alex_s168.stackvm2.inst.Instructions
 object DeCompiler {
 
     fun decomp(code: String, origMem: IntArray): String =
-        stage3(stage2(stage1(stage0(prep(code)))), origMem).trim()
+        finishUp(stage5(stage4(stage3(stage3(stage3(stage2(stage1(stage0(prep(code))))))))).trim())
 
     private fun isExpr(line: String): Boolean {
         val args = line.trim().split(" ")
@@ -20,36 +20,137 @@ object DeCompiler {
     private fun argType(arg: String?): Char? =
         arg?.getOrNull(0)
 
-    private fun stage3(code: String, rom: IntArray): String {
+    private fun finishUp(code: String): String =
+        code.split("\n").map {
+            if (it.endsWith(':')) it else "    $it"
+        }.joinToString("\n")
+
+    private fun stage5(code: String): String {
         val lines = code.split("\n")
         val sb = StringBuilder()
 
-        val writtenTo = mutableSetOf<Int>()
-        val readFrom = mutableSetOf<Int>()
-        val labels = mutableSetOf<Int>()
+        var i = 0
+        while (i < lines.size) {
+            val line = lines[i].trim()
+            val args = line.trim().split(" ")
+            val inst = Instructions.getInst(args[0])
 
-        for (line in lines) {
-            val sp = line.split('=')
-
-            sp.last().split(' ').forEach {
-                if (it.any { c -> c.isDigit() } && it.startsWith('a'))
-                    readFrom += it.substring(1).toInt()
-
-                if (it.any { c -> c.isDigit() } && it.startsWith('l'))
-                    labels += it.substring(1).toInt()
+            if (line.endsWith(':')) {
+                sb.append(line)
+                sb.append("\n")
+                i ++
+                continue
             }
 
-            if (sp.size > 1) {
-                sp.first().split(' ').forEach {
-                    if (it.any { c -> c.isDigit() } && it.startsWith('a'))
-                        writtenTo += it.substring(1).toInt()
+            if (i + 1 < lines.size) {
+                val nextLine = lines[i + 1].trim()
+                val nextArgs = nextLine.trim().split(" ")
+                val nextInst = Instructions.getInst(nextArgs[0])
+
+                if (line.startsWith("cond = ") && nextLine.endsWith(" = cond")) {
+                    sb.append(nextLine.trim().substring(0, nextLine.length - 7))
+                    sb.append(" = ")
+                    sb.append(line.trim().substring(7))
+                    sb.append("\n")
+
+                    i += 2
+                    continue
                 }
             }
+
+
+            sb.append(line)
+            sb.append("\n")
+            i ++
         }
 
-        // TODO
+        return sb.toString()
+    }
 
-        sb.append(code)
+    private fun stage4(code: String): String =
+        code.replace("not ( sub", "eq (")
+
+    private fun stage3(code: String): String {
+        val lines = code.split("\n")
+        val sb = StringBuilder()
+
+        var i = 0
+        while (i < lines.size) {
+            val line = lines[i].trim()
+            val args = line.trim().split(" ")
+            val inst = Instructions.getInst(args[0])
+
+            if (line.endsWith(':')) {
+                sb.append(line)
+                sb.append("\n")
+                i ++
+                continue
+            }
+
+            if (i + 1 < lines.size) {
+                val nextLine = lines[i + 1].trim()
+                val nextArgs = nextLine.trim().split(" ")
+                val nextInst = Instructions.getInst(nextArgs[0])
+
+                if (args[0] == "phc" && nextLine.endsWith(" = #")) {
+                    sb.append(nextArgs[0])
+                    sb.append(" = cond\n")
+
+                    i += 2
+                    continue
+                }
+
+                if (line.trim().startsWith("cond =")) {
+                    if (nextArgs[0] == "not") {
+                        sb.append("cond = not (")
+                        sb.append(line.trim().substring(6))
+                        sb.append(" )\n")
+
+                        i += 2
+                        continue
+                    }
+                }
+
+                if (i + 2 < lines.size) {
+                    val nextNextLine = lines[i + 2].trim()
+                    val nextNextArgs = nextNextLine.trim().split(" ")
+                    val nextNextInst = Instructions.getInst(nextNextArgs[0])
+
+                    if (inst?.properties?.contains(InstructionProperties.ONLY_PUSH) == true &&
+                        nextInst?.properties?.contains(InstructionProperties.OP_1_1) == true &&
+                        nextNextLine.endsWith(" = #")) {
+                        sb.append(nextNextArgs[0])
+                        sb.append(" = ")
+                        sb.append(nextArgs[0])
+                        sb.append(" ( ")
+                        sb.append(args[1])
+                        sb.append(" )\n")
+
+                        i += 3
+                        continue
+                    }
+
+                    if (isExpr(line) && nextLine.trim().startsWith("cond = ")) {
+                        if (nextNextInst?.properties?.contains(InstructionProperties.CONDF_1_0) == true) {
+                            sb.append("cond = ")
+                            sb.append(nextNextArgs[0])
+                            sb.append(" ( ( ")
+                            sb.append(line)
+                            sb.append(" ) ( ")
+                            sb.append(nextLine.trim().substring(7))
+                            sb.append(" ) )\n")
+
+                            i += 3
+                            continue
+                        }
+                    }
+                }
+            }
+
+            sb.append(line)
+            sb.append("\n")
+            i ++
+        }
 
         return sb.toString()
     }
@@ -62,10 +163,18 @@ object DeCompiler {
         while (i < lines.size) {
             val line = lines[i].trim()
             val args = line.split(" ")
+            val inst = Instructions.getInst(args[0])
+
+            if (line.endsWith(':')) {
+                sb.append(line)
+                sb.append("\n")
+                i ++
+                continue
+            }
 
             if (i + 1 < lines.size) {
                 val nextLine = lines[i + 1].trim()
-                val nextArgs = nextLine.split(" ")
+                val nextArgs = nextLine.trim().split(" ")
 
                 if (isExpr(line)) {
 
@@ -79,12 +188,70 @@ object DeCompiler {
                         continue
                     }
 
+                    if (nextArgs[0] == "poc") {
+                        sb.append("cond = ")
+                        sb.append(line)
+                        sb.append('\n')
+
+                        i += 2
+                        continue
+                    }
+
+                }
+
+                if (inst?.properties?.contains(InstructionProperties.ONLY_PUSH) == true) {
+
+                    if (nextArgs[0] == "poc") {
+                        sb.append("cond = ")
+                        sb.append(args.subList(1, args.size).joinToString(" "))
+                        sb.append('\n')
+
+                        i += 2
+                        continue
+                    }
+
                 }
             }
 
             if (args[0] == "sto") {
                 sb.append(args[1])
                 sb.append(" = #\n")
+
+                i += 1
+                continue
+            }
+
+            if (args[0] == "jmp") {
+                sb.append("goto ")
+                sb.append(args[1])
+                sb.append('\n')
+
+                i += 1
+                continue
+            }
+
+            if (args[0] == "jmc") {
+                sb.append("goto_cond ")
+                sb.append(args[1])
+                sb.append('\n')
+
+                i += 1
+                continue
+            }
+
+            if (args[0] == "cal") {
+                sb.append("call ")
+                sb.append(args[1])
+                sb.append('\n')
+
+                i += 1
+                continue
+            }
+
+            if (args[0] == "cac") {
+                sb.append("call_cond ")
+                sb.append(args[1])
+                sb.append('\n')
 
                 i += 1
                 continue
@@ -105,11 +272,18 @@ object DeCompiler {
         var i = 0
         while (i < lines.size) {
             val line = lines[i].trim()
-            val args = line.split(" ")
+            val args = line.trim().split(" ")
+
+            if (line.endsWith(':')) {
+                sb.append(line)
+                sb.append("\n")
+                i ++
+                continue
+            }
 
             if (i + 1 < lines.size) {
                 val nextLine = lines[i + 1].trim()
-                val nextArgs = nextLine.split(" ")
+                val nextArgs = nextLine.trim().split(" ")
 
                 if (isExpr(line)) {
 
@@ -218,6 +392,13 @@ object DeCompiler {
         var i = 0
         while (i < lines.size) {
             val line = lines[i]
+
+            if (line.endsWith(':')) {
+                sb.append(line)
+                sb.append("\n")
+                i ++
+                continue
+            }
 
             val args = line.trim().split(" ")
 

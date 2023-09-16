@@ -12,10 +12,10 @@ class ExecutableFormant(
 
     fun save(buf: ByteBuffer) {
         buf.putInt(isaVersion.length)
-        isaVersion.forEach { buf.putChar(it) }
+        isaVersion.forEach { buf.put(it.code.toByte()) }
 
         buf.putInt(targetString.length)
-        targetString.forEach { buf.putChar(it) }
+        targetString.forEach { buf.put(it.code.toByte()) }
 
         buf.putInt(entryPoint)
 
@@ -29,12 +29,12 @@ class ExecutableFormant(
         fun from(buf: ByteBuffer): ExecutableFormant {
             val isaVersion = StringBuilder()
             repeat(buf.getInt()) {
-                isaVersion.append(buf.getChar())
+                isaVersion.append(buf.get().toInt().toChar())
             }
 
             val targetString = StringBuilder()
             repeat(buf.getInt()) {
-                targetString.append(buf.getChar())
+                targetString.append(buf.get().toInt().toChar())
             }
 
             val entryPoint = buf.getInt()

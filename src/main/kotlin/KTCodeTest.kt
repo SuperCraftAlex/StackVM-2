@@ -1,7 +1,8 @@
-import me.alex_s168.stackvm2.common.MemoryLayout
+import me.alex_s168.stackvm2.mem.MemoryLayout
 import me.alex_s168.stackvm2.decomp.DeCompiler
 import me.alex_s168.stackvm2.disasm.DisAssembler
 import me.alex_s168.stackvm2.ktcode.compile
+import me.alex_s168.stackvm2.ktcode.`var`.asMutable
 import me.alex_s168.stackvm2.ktcode.`var`.eq
 import me.alex_s168.stackvm2.std.StandardInterrupts
 import me.alex_s168.stackvm2.vm.VirtualMachine
@@ -18,30 +19,48 @@ object KTCodeTest {
             .build()
 
         val comp = compile(VirtualMachine.ELEMENT_SIZE, layout, 512) { c ->
-           /*
-            val arr = c.ram(10 * c.elemSize)
+
+            val arr = c.alloc(10 * c.elemSize)
 
             val index1 = c.intVar(3)
-            arr[index1 + 1] = c.static(69)
+            arr[index1] = c.static(69)
 
             val index2 = c.intVar(2)
             arr[index2] = c.static(58)
 
             c.load(arr[index1] eq arr[2])
-*/
+
+
+
 
             val addFunc = c.func(2) { args ->
                 c.ret(args[0] + args[1])
             }
 
-            var a = c.intVar(1)
-            a ++
+            var a1 = c.intVar(1)
+            a1 ++
 
-            addFunc(9, -a)
+            addFunc(9, -a1)
 
             c.cond(c.getTop() eq 7) {
                 c.load(69)
             }
+
+
+
+            var a2 = c.intVar(20)
+            val b2 = c.intVar(20)
+
+            val cond = c.intVar()
+            cond.value = a2 eq b2
+
+            c.doWhile(cond) {
+                c.loadImm('a'.code)
+                c.interrupt(StandardInterrupts.PUT_CHAR)
+                a2--
+                cond.value = a2 eq b2
+            }
+
 
             c.interrupt(StandardInterrupts.EXIT)
         }
@@ -59,14 +78,22 @@ object KTCodeTest {
         )
 
         println("Decompiled:")
-        println(DeCompiler.decomp(DisAssembler(comp, 512).disassemble(), comp.toList().stream().skip(512).toList().toIntArray()))
+        //println(DisAssembler(comp, 512).disassemble(512))
+        println(DeCompiler.decomp(DisAssembler(comp, 512).disassemble(512), comp.toList().stream().skip(512).toList().toIntArray()))
         println()
 
         println("Started VM!")
-        while (vm.running) {
+        for (i in 0..300) {
+            if (!vm.running) {
+                println("VM stopped!")
+                break
+            }
             vm.tick()
-            //vm.debug()
         }
+        //while (vm.running) {
+        //    vm.tick()
+        //    vm.debug()
+        //}
 
         println("Took ${vm.ticksElapsed()} ticks to execute!")
         println(vm)

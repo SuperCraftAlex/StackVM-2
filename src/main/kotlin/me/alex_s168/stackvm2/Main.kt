@@ -1,7 +1,7 @@
 package me.alex_s168.stackvm2
 
 import me.alex_s168.stackvm2.asm.Assembler
-import me.alex_s168.stackvm2.common.MemoryLayout
+import me.alex_s168.stackvm2.mem.MemoryLayout
 import me.alex_s168.stackvm2.format.ExecutableFormant
 import me.alex_s168.stackvm2.format.LinkableFormat
 import me.alex_s168.stackvm2.inst.Instructions

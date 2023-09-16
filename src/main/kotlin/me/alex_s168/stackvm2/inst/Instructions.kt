@@ -237,7 +237,9 @@ object Instructions {
         id = 42,
         name = "and",
         args = listOf(),
-        properties = listOf()
+        properties = listOf(
+            CONDF_1_0
+        )
     )
 
     // or				condition flag = condition flag || stack.pop()
@@ -245,7 +247,9 @@ object Instructions {
         id = 43,
         name = "orc",
         args = listOf(),
-        properties = listOf()
+        properties = listOf(
+            CONDF_1_0
+        )
     )
 
     // phc				push condition flag onto thhe stack
@@ -344,6 +348,60 @@ object Instructions {
         properties = listOf()
     )
 
+    // drp              drops the top element from the stack
+    val DROP           = reg(
+        id = 62,
+        name = "drp",
+        args = listOf(),
+        properties = listOf(
+            ONLY_POP
+        )
+    )
+
+    // jst              jumps to the address on the stack (and pops it)
+    val JUMP_ST	    = reg(
+        id = 63,
+        name = "jst",
+        args = listOf(),
+        properties = listOf(
+            JUMPING
+        )
+    )
+
+    // jsc              jumps to the address on the stack if the condition flag is set (always pops it)
+    val JUMP_ST_COND = reg(
+        id = 64,
+        name = "jsc",
+        args = listOf(),
+        properties = listOf(
+            JUMPING,
+            CONDITIONAL
+        )
+    )
+
+    // cst              calls the address on the stack (and pops it)
+    val CALL_ST	    = reg(
+        id = 65,
+        name = "cst",
+        args = listOf(),
+        properties = listOf(
+            JUMPING,
+            CALLING
+        )
+    )
+
+    // csc              calls the address on the stack if the condition flag is set (always pops it)
+    val CALL_ST_COND = reg(
+        id = 66,
+        name = "csc",
+        args = listOf(),
+        properties = listOf(
+            JUMPING,
+            CALLING,
+            CONDITIONAL
+        )
+    )
+
     private fun reg(inst: Instruction): Instruction {
         instructions.add(inst)
         return inst
@@ -372,5 +430,5 @@ object Instructions {
         return null
     }
 
-    const val ISA_VERSION = "2.0.1"
+    const val ISA_VERSION = "2.0.2"
 }

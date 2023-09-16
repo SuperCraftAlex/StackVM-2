@@ -27,16 +27,14 @@ class VMFunction (
             throw IllegalArgumentException("Invalid number of arguments!")
         }
 
-        for (arg in args) {
+        for (arg in args.reversed()) {
             when (arg) {
                 is Int -> ktcode.load(arg)
-                is Char -> ktcode.load(arg.toInt())
-                is MemoryAllocation -> ktcode.load(arg)
+                is Char -> ktcode.load(arg.code)
+                is Stackable -> arg.putOntoStack()
                 else -> throw IllegalArgumentException("Invalid argument type!")
             }
         }
-
-        ktcode.rotateTop(this.args)
 
         ktcode.mem += Instructions.CALL.id
         ktcode.unresolvedReferences.add(ktcode.mem.size to this.memAlloc)

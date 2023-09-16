@@ -39,6 +39,11 @@ class VirtualMachine(
         ticks.next()
 
         prevPc = pc
+        //repeat(10) {
+        //    print(mem[it + pc])
+        //    print(" ")
+        //}
+        //println()
         when (mem[pc]) {
             Instructions.NOOP.id  	 	-> {
 
@@ -50,7 +55,7 @@ class VirtualMachine(
                 sp --
             }
             Instructions.SET_Z.id 	 	-> {
-                mem[sp] = 0
+                mem[sp-1] = 0
             }
             Instructions.MSP.id    		-> {
                 sp = mem[pc + 1]
@@ -70,6 +75,15 @@ class VirtualMachine(
                     pc = mem[pc + 1] - 1
                 }
             }
+            Instructions.JUMP_ST.id     -> {
+                pc = pop()
+            }
+            Instructions.JUMP_ST_COND.id-> {
+                val p = pop()
+                if (condF) {
+                    pc = p
+                }
+            }
             Instructions.CALL.id 		-> {
                 val old = pc
                 pc = mem[pc + 1] - 1
@@ -79,6 +93,19 @@ class VirtualMachine(
                 if (condF) {
                     val old = pc
                     pc = mem[pc + 1] - 1
+                    push(old + 1)
+                }
+            }
+            Instructions.CALL_ST.id 	-> {
+                val old = pc
+                pc = pop()
+                push(old + 1)
+            }
+            Instructions.CALL_ST_COND.id-> {
+                val p = pop()
+                if (condF) {
+                    val old = pc
+                    pc = p
                     push(old + 1)
                 }
             }
@@ -247,7 +274,7 @@ class VirtualMachine(
     companion object {
         const val ELEMENT_SIZE: Int = Int.SIZE_BYTES
         const val VM_VERSION = "1.1"
-        const val ISA_VERSION = "2.0.1"
+        const val ISA_VERSION = "2.0.2"
         const val TARGET_STRING = "svm:$ISA_VERSION:std"
     }
 }

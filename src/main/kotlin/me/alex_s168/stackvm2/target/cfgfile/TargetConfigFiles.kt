@@ -1,6 +1,6 @@
 package me.alex_s168.stackvm2.target.cfgfile
 
-import me.alex_s168.stackvm2.common.MemoryLayout
+import me.alex_s168.stackvm2.mem.MemoryLayout
 import me.alex_s168.stackvm2.target.TargetString
 import me.alex_s168.stackvm2.target.matchesTargetString
 import java.io.File

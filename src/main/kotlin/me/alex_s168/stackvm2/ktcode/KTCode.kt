@@ -2,7 +2,7 @@ package me.alex_s168.stackvm2.ktcode
 
 import me.alex_s168.ktlib.collection.LockableArrayList
 import me.alex_s168.ktlib.collection.LockableStack
-import me.alex_s168.stackvm2.common.MemoryLayout
+import me.alex_s168.stackvm2.mem.MemoryLayout
 import me.alex_s168.stackvm2.inst.Instructions
 import me.alex_s168.stackvm2.ktcode.`var`.*
 import java.util.*
@@ -134,31 +134,43 @@ open class KTCode(
         mem += Instructions.MUL.id
     }
 
-    fun call(alloc: MemoryAllocation) {
+    fun call(func: VMFunction) {
         if (locked) {
             throw IllegalStateException("Code is locked!")
         }
 
         mem += Instructions.CALL.id
-        unresolvedReferences.add(mem.size to alloc)
+        unresolvedReferences.add(mem.size to func.memAlloc)
         mem += 0
     }
 
-    fun call(func: VMFunction) =
-        call(func.memAlloc)
+    fun call(alloc: Stackable) {
+        if (locked) {
+            throw IllegalStateException("Code is locked!")
+        }
 
-    fun callCond(alloc: MemoryAllocation) {
+        alloc.putOntoStack()
+        callStack()
+    }
+
+    fun callCond(func: VMFunction) {
         if (locked) {
             throw IllegalStateException("Code is locked!")
         }
 
         mem += Instructions.CALL_COND.id
-        unresolvedReferences.add(mem.size to alloc)
+        unresolvedReferences.add(mem.size to func.memAlloc)
         mem += 0
     }
 
-    fun callCond(func: VMFunction) =
-        callCond(func.memAlloc)
+    fun callCond(alloc: Stackable) {
+        if (locked) {
+            throw IllegalStateException("Code is locked!")
+        }
+
+        alloc.putOntoStack()
+        callStackCond()
+    }
 
     fun ret() {
         if (locked) {
@@ -229,6 +241,25 @@ open class KTCode(
         return VMFunction(this, args, code).also {
             funcs.add(it)
         }
+    }
+
+    fun doWhile(cond: Stackable, block: () -> Unit) {
+        if (locked) {
+            throw IllegalStateException("Code is locked!")
+        }
+
+        jump(0)
+
+        val old = mem.size
+
+        block()
+
+        mem[old-1] = mem.size
+
+        cond.putOntoStack(0)
+        popCf()
+
+        jumpCond(old)
     }
 
     private fun getMemRegions(): MutableList<IntRange> =

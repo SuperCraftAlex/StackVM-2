@@ -14,6 +14,8 @@ enum class InstructionProperties {
     OP_2_1,
     OP_1_1,
 
-    SP_MODIFYING
+    SP_MODIFYING,
+
+    CONDF_1_0
 
 }

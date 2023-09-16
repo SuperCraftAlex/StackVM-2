@@ -78,6 +78,46 @@ open class KTCodeBaseInstructions(
         mem += Instructions.SET_Z.id
     }
 
+    fun drop() {
+        if (locked) {
+            throw IllegalStateException("Code is locked!")
+        }
+
+        mem += Instructions.DROP.id
+    }
+
+    fun jumpStack() {
+        if (locked) {
+            throw IllegalStateException("Code is locked!")
+        }
+
+        mem += Instructions.JUMP_ST.id
+    }
+
+    fun callStack() {
+        if (locked) {
+            throw IllegalStateException("Code is locked!")
+        }
+
+        mem += Instructions.CALL_ST.id
+    }
+
+    fun jumpStackCond() {
+        if (locked) {
+            throw IllegalStateException("Code is locked!")
+        }
+
+        mem += Instructions.JUMP_ST_COND.id
+    }
+
+    fun callStackCond() {
+        if (locked) {
+            throw IllegalStateException("Code is locked!")
+        }
+
+        mem += Instructions.CALL_ST_COND.id
+    }
+
     fun jump(address: Int) {
         if (locked) {
             throw IllegalStateException("Code is locked!")

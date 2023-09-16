@@ -1,8 +1,8 @@
 package me.alex_s168.stackvm2.vm.mem
 
 import me.alex_s168.ktlib.Lockable
-import me.alex_s168.stackvm2.common.MemoryLayout
-import me.alex_s168.stackvm2.common.MemoryRegion
+import me.alex_s168.stackvm2.mem.MemoryLayout
+import me.alex_s168.stackvm2.mem.MemoryRegion
 
 open class SegmentedMemory(
     protected val regions: List<MemoryRegion>

@@ -9,8 +9,33 @@ class DisAssembler(
 ) {
 
     val usedMemoryAddresses = HashMap<Int, String>()
+    val usedLabels = HashMap<Int, String>()
 
-    fun disassemble(): String {
+    private fun insertLabels(a: String, inCodeOff: Int): String {
+        val sb = StringBuilder("_start:\n")
+
+        var c = inCodeOff
+        for (line in a.split('\n')) {
+            if (c in usedMemoryAddresses.keys) {
+                sb.append(usedMemoryAddresses[c])
+                sb.append(":\n")
+            }
+            else if (c in usedLabels.keys) {
+                sb.append(usedLabels[c])
+                sb.append(":\n")
+            }
+
+            sb.append("    ")
+            sb.append(line)
+            sb.append('\n')
+
+            c += line.split(" ").count() - 1
+        }
+
+        return sb.toString()
+    }
+
+    fun disassemble(inCodeOff: Int): String {
         val sb = StringBuilder()
 
         while (pc < code.size) {
@@ -39,8 +64,8 @@ class DisAssembler(
                     sb.append(usedMemoryAddresses[arg])
                 }
                 else if (instArg == ArgType.PC_ADDRESS) {
-                    usedMemoryAddresses.putIfAbsent(arg, "label_$arg")
-                    sb.append(usedMemoryAddresses[arg])
+                    usedLabels.putIfAbsent(arg, "label_$arg")
+                    sb.append(usedLabels[arg])
                 }
                 else if (instArg == ArgType.MAGIC_NUMBER) {
                     sb.append("0x")
@@ -58,7 +83,7 @@ class DisAssembler(
             pc += inst.argCount
         }
 
-        return sb.toString()
+        return insertLabels(sb.toString(), inCodeOff)
     }
 
 }

@@ -1,4 +1,4 @@
-package me.alex_s168.stackvm2.common
+package me.alex_s168.stackvm2.mem
 
 data class MemoryRegion(
     val start: Int,

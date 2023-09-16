@@ -7,6 +7,15 @@ infix fun Stackable.eq(value: Any?): Stackable {
         if (value.getElemSize() != getElemSize())
             throw UnsupportedOperationException("Cannot compare MemoryAllocations of different sizes!")
 
+        if (getElemSize() == 1) {
+            ktcode.load(this)
+            ktcode.load(value)
+
+            ktcode.cmpEq()
+
+            return ktcode.getCf()
+        }
+
         ktcode.loadImm(1)
 
         forElems {

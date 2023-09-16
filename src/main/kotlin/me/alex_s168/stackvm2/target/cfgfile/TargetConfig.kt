@@ -1,6 +1,6 @@
 package me.alex_s168.stackvm2.target.cfgfile
 
-import me.alex_s168.stackvm2.common.MemoryLayout
+import me.alex_s168.stackvm2.mem.MemoryLayout
 
 data class TargetConfig(
     val name: String,
