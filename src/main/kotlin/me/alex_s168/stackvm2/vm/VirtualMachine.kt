@@ -246,6 +246,9 @@ class VirtualMachine(
 
     companion object {
         const val ELEMENT_SIZE: Int = Int.SIZE_BYTES
+        const val VM_VERSION = "1.1"
+        const val ISA_VERSION = "2.0.1"
+        const val TARGET_STRING = "svm:$ISA_VERSION:std"
     }
 }
 

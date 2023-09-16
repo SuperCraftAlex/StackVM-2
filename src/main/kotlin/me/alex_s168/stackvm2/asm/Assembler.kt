@@ -4,7 +4,7 @@ import me.alex_s168.stackvm2.inst.Instructions
 
 class Assembler(
     val labels: HashMap<String, Int> = HashMap(),
-    val gen: IntArray,
+    val gen: MutableList<Int>,
     var index: Int = 0
 ) {
 
@@ -39,6 +39,7 @@ class Assembler(
                     continue
                 }
 
+                repeat(v) { gen += 0 }
                 index += v
             }
 
@@ -50,7 +51,7 @@ class Assembler(
                     continue
                 }
 
-                gen[index] = inst.id
+                gen += inst.id
                 index ++
             }
 
@@ -60,8 +61,25 @@ class Assembler(
                     unresolved.add(index to arg)
                 }
 
-                gen[index] = v
+                gen += v
                 index ++
+            }
+        }
+
+        return this
+    }
+
+    fun resolveLocalLabels(): Assembler {
+        for ((i, arg) in unresolved.toList()) {
+            if (arg.startsWith("_"))
+                continue
+
+            if (arg in labels) {
+                gen[i] = labels[arg]!!
+                unresolved.remove(i to arg)
+            }
+            else {
+                errors.add("invalid literal: $arg")
             }
         }
 
@@ -77,6 +95,14 @@ class Assembler(
 
         return this
     }
+
+    fun getGlobalLabels(): HashMap<String, Int> =
+        labels.filter {
+            it.key.startsWith("_")
+        }.toMap(HashMap())
+
+    fun getUnresolvedLabels(): List<Pair<Int, String>> =
+        unresolved.toList()
 
     // not used YET
     fun complete(): Assembler {

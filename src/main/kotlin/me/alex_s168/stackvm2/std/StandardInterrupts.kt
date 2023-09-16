@@ -26,7 +26,18 @@ object StandardInterrupts {
 
     }
 
+    private val interruptIds = HashMap<String, Int>()
+
+    init {
+        interruptIds["PUT_CHAR"] = PUT_CHAR
+        interruptIds["GET_CHAR"] = GET_CHAR
+        interruptIds["EXIT"] = EXIT
+    }
+
     fun getInterruptTable(): Map<Int, (VirtualMachine) -> Unit> =
         interrupts.toMap()
+
+    fun getInterruptIds(): Map<String, Int> =
+        interruptIds.toMap()
 
 }

@@ -10,7 +10,7 @@ object AssemblerTest {
     @JvmStatic
     fun main(args: Array<String>) {
         val asm = Assembler(
-            gen = IntArray(1 shl 17),
+            gen = mutableListOf(),
             index = 512
         )
 
@@ -43,7 +43,7 @@ object AssemblerTest {
         }
 
         val vm = VirtualMachine(
-            SimpleMemory(asm.gen),
+            SimpleMemory(asm.gen.toIntArray()),
             512,
             StandardInterrupts.getInterruptTable()
         )

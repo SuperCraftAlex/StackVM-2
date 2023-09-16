@@ -26,5 +26,5 @@ kotlin {
 }
 
 application {
-    mainClass.set("MainKt")
+    mainClass.set("me.alex_s168.stackvm2.MainKt")
 }

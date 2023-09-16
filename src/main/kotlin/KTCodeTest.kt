@@ -13,7 +13,7 @@ object KTCodeTest {
     fun main(args: Array<String>) {
         val layout = MemoryLayout.new()
             .ram(0..<512)
-            .rom(512..<1024)    // ram is used here for the program
+            .rom(512..<1024)
             .ram(1024..<2048)
             .build()
 

@@ -371,4 +371,6 @@ object Instructions {
         }
         return null
     }
+
+    const val ISA_VERSION = "2.0.1"
 }
