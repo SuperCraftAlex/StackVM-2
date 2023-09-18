@@ -1,6 +1,8 @@
 package me.alex_s168.stackvm2
 
 import me.alex_s168.stackvm2.asm.Assembler
+import me.alex_s168.stackvm2.decomp.DeCompiler
+import me.alex_s168.stackvm2.disasm.DisAssembler
 import me.alex_s168.stackvm2.mem.MemoryLayout
 import me.alex_s168.stackvm2.format.ExecutableFormant
 import me.alex_s168.stackvm2.format.LinkableFormat
@@ -287,6 +289,44 @@ fun main(argsIn: Array<String>) {
             System.err.println("Took ${vm.ticksElapsed()} ticks to execute!")
             System.err.println(vm)
         }
+        "disasm", "decomp" -> {
+            if (opArgs.size != 1) {
+                System.err.println("Invalid number of arguments for operation: $op!")
+                exitProcess(1)
+            }
+
+            val file = File(opArgs[0])
+            if (!file.exists()) {
+                System.err.println("File does not exist: ${file.absolutePath}!")
+                exitProcess(1)
+            }
+
+            val buf = ByteBuffer.wrap(file.readBytes())
+
+            val (c, off) = when (file.extension) {
+                "o" -> {
+                    val f = LinkableFormat.from(buf)
+                    f.code to f.offset
+                }
+                "svm" -> {
+                    val f = ExecutableFormant.from(buf)
+                    f.code to f.entryPoint
+                }
+                else -> {
+                    System.err.println("Invalid file extension: ${file.extension}!")
+                    exitProcess(1)
+                }
+            }
+
+            if (op == "decomp") {
+                println(DeCompiler.decomp(DisAssembler(c).disassemble(off), c))
+            }
+            else {
+                println(DisAssembler(c).disassemble(off))
+            }
+
+            System.err.println("Done!")
+        }
         else -> {
             System.err.println("Invalid operation: $op!")
             exitProcess(1)
@@ -300,10 +340,17 @@ private fun showHelp() {
     println()
     println("Operations:")
     println("  link <files> -o <output file> [-entry <entry label name>] [-entryPos <entry pos>] [-target <target>] [-isa <isa version>] [-exec]")
-    println("    (\"-exec\" generates an executable file instead of a linkable file)")
+    println("    links the given linkable files (.o) into one file")
+    println("    (the \"-exec\" parameter generates an executable file (.svm) instead of a linkable file)")
     println("  asm <file> [-o <output file>]")
+    println("    assembles the file and generates a linkable file")
     println("  run <file> [-ram <ram size>] [-target <target>]")
+    println("    executes a SVM-Executable (.svm) file")
     println("    (\"-target <target>\" specifies the memory layout to use)")
+    println("  disasm <file>")
+    println("    disassembles the given linkable (.o) or executable (.svm) file")
+    println("  decomp <file>")
+    println("    \"decomp\" like \"disasm\" but shows a more human readable version of the code")
     println()
-    println("Found any bugs or need help? Go to https://github.com/SuperCraftAlex/StackVM-2")
+    println("Found any bugs or need help? Visit https://github.com/SuperCraftAlex/StackVM-2")
 }

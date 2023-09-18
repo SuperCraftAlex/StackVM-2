@@ -2,7 +2,6 @@ import me.alex_s168.stackvm2.mem.MemoryLayout
 import me.alex_s168.stackvm2.decomp.DeCompiler
 import me.alex_s168.stackvm2.disasm.DisAssembler
 import me.alex_s168.stackvm2.ktcode.compile
-import me.alex_s168.stackvm2.ktcode.`var`.asMutable
 import me.alex_s168.stackvm2.ktcode.`var`.eq
 import me.alex_s168.stackvm2.std.StandardInterrupts
 import me.alex_s168.stackvm2.vm.VirtualMachine
