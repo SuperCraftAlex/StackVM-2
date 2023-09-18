@@ -18,7 +18,7 @@ object KTCodeTest {
             .build()
 
         val comp = compile(VirtualMachine.ELEMENT_SIZE, layout, 512) { c ->
-
+/*
             val arr = c.alloc(10 * c.elemSize)
 
             val index1 = c.intVar(3)
@@ -28,7 +28,7 @@ object KTCodeTest {
             arr[index2] = c.static(58)
 
             c.load(arr[index1] eq arr[2])
-
+*/
 
 
 
@@ -46,7 +46,7 @@ object KTCodeTest {
             }
 
 
-
+/*
             var a2 = c.intVar(20)
             val b2 = c.intVar(20)
 
@@ -59,6 +59,7 @@ object KTCodeTest {
                 a2--
                 cond.value = a2 eq b2
             }
+            */
 
 
             c.interrupt(StandardInterrupts.EXIT)
@@ -77,8 +78,8 @@ object KTCodeTest {
         )
 
         println("Decompiled:")
-        //println(DisAssembler(comp, 512).disassemble(512))
-        println(DeCompiler.decomp(DisAssembler(comp, 512).disassemble(512), comp.toList().stream().skip(512).toList().toIntArray()))
+        println(DisAssembler(comp, 512).disassemble(512))
+        //println(DeCompiler.decomp(DisAssembler(comp, 512).disassemble(512), comp.toList().stream().skip(512).toList().toIntArray()))
         println()
 
         println("Started VM!")

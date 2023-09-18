@@ -1,0 +1,2 @@
+add := Val Fun<Int, Int>'Int = (native! "_add")
+sub := Val Fun<Int, Int>'Int = (native! "_sub")

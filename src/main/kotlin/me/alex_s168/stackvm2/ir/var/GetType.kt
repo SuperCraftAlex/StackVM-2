@@ -6,6 +6,12 @@ import me.alex_s168.stackvm2.ir.ct.minimizeCT
 
 
 fun getType(node: ASTNode): Type? {
+    if (node is ASTStringLiteralNode) {
+        return Type("Str!")
+    }
+    if (node is ASTBlockNode) {
+        return Type("Label!")
+    }
     if (node is ASTArrayLiteralNode) {
         if (node.value.isEmpty())
             return Type("FlatArr!")

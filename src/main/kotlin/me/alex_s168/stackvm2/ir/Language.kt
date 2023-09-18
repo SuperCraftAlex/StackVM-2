@@ -6,11 +6,14 @@ import kotlin.system.exitProcess
 import com.github.ajalt.mordant.rendering.TextColors.*
 import com.github.ajalt.mordant.rendering.TextStyles
 import com.github.ajalt.mordant.terminal.Terminal
+import me.alex_s168.stackvm2.ir.ct.SpecialFunctions
 import me.alex_s168.stackvm2.ir.ct.minimizeCT
 import me.alex_s168.stackvm2.ir.exception.HandledException
 
 fun main() {
     val code = """
+        (use! "std.asm")
+        
         a := Int! = 3
         b := Int! = a
         c := Int! = (add! a b)
@@ -18,9 +21,8 @@ fun main() {
         d := Val RefArr<Int>'10 = ::1 2; :3 4; :5 6;;
         
         incFun := Fun<Int>'Int = {
-            (return (add A[0] 1))
+            (return (add A0 1))
         }
-        (add f)
         
         d[1] = (incFun d[1])
     """.trimIndent()
@@ -28,6 +30,7 @@ fun main() {
     try {
         val tokens = tokenize(code)
         val (ast, _) = parse(tokens)
+        SpecialFunctions.addTo(ast)
         prepare(ast)
         minimizeCT(ast)
         check(ast)
@@ -52,13 +55,17 @@ object Language {
         "Fun",
         "Any",
         "Type",
+        "Label",
+        "Str",
 
         "Int!",
         "Ref!",
         "FlatArr!",
         "RefArr!",
         "Fun!",
-        "Type!"
+        "Type!",
+        "Label!",
+        "Str!"
     )
 
     var code: String = ""

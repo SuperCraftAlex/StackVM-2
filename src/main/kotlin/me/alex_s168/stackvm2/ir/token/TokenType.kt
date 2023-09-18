@@ -19,6 +19,7 @@ enum class TokenType {
     STAR,
     AND,
     MODULO,
-    SEMICOLON
+    SEMICOLON,
+    QUOTE,
 
 }

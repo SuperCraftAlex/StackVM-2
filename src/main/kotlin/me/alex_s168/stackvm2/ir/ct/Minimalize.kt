@@ -6,6 +6,11 @@ import me.alex_s168.stackvm2.ir.`var`.getType
 import me.alex_s168.stackvm2.ir.`var`.getVariable
 
 fun minimizeCT(node: ASTNode): ASTNode {
+    if (node is ASTBlockNode) {
+        node.children.forEach { minimizeCT(it) }
+        return node
+    }
+
     if (node is ASTVariableNode) {
         val v = node.getVariable(node.name)
             ?: Language.exception("Variable '${node.name}' not found!", node.line, node.column, node.length)
@@ -29,7 +34,7 @@ fun minimizeCT(node: ASTNode): ASTNode {
 
     if (node is ASTFunctionCallNode) {
         if (node.func is ASTVariableNode) {
-            CTFunctions[(node.func as ASTVariableNode).name]?.let { f ->
+            SpecialFunctions[(node.func as ASTVariableNode).name]?.let { f ->
                 if (node.arguments.size > f.args.size) {
                     val firstInvalidArg = node.arguments[f.args.size]
                     Language.exception(

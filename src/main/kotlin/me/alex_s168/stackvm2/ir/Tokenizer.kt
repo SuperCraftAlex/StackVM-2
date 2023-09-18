@@ -89,6 +89,10 @@ fun tokenize(code: String): List<Token> {
                 tokens.add(Token(TokenType.MODULO, "%", line, column))
                 column++
             }
+            '"' -> {
+                tokens.add(Token(TokenType.QUOTE, "%", line, column))
+                column++
+            }
             else -> {
                 val start = i
                 while (i < code.length
@@ -112,6 +116,7 @@ fun tokenize(code: String): List<Token> {
                     && code[i] != '*'
                     && code[i] != '&'
                     && code[i] != '%'
+                    && code[i] != '"'
                 ) {
                     i++
                 }

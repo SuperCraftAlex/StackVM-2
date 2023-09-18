@@ -9,6 +9,19 @@ fun parseExpression(tokens: List<Token>, off: Int): Pair<ASTNode, Int> {
     val token = tokens[i]
     when (token.type) {
         TokenType.END_OF_LINE -> {}
+        TokenType.QUOTE -> {
+            val sb = StringBuilder()
+            while (i + 1 < tokens.size && tokens[i + 1].type != TokenType.QUOTE) {
+                sb.append(tokens[i + 1].value)
+                sb.append(" ")
+                i += 1
+                if (i >= tokens.size) {
+                    Language.exception("Expected closing quote", tokens[i - 1])
+                }
+            }
+            i += 1
+            return Pair(ASTStringLiteralNode(sb.toString().dropLast(1), token.line, token.column, token.value.length, null), i - off + 1)
+        }
         TokenType.COLON -> {
             val elems = mutableListOf<ASTNode>()
             while (i + 1 < tokens.size && tokens[i + 1].type != TokenType.SEMICOLON) {

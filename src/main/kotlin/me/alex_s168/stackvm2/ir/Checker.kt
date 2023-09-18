@@ -8,7 +8,7 @@ fun check(node: ASTNode) {
     if (node is ASTVariableNode) {
         if (node.getVariable(node.name) == null)
             Language.exception(
-                "Identifier '${node.name}' is not defined!",
+                "'${node.name}' is not defined!",
                 node.line,
                 node.column,
                 node.length
