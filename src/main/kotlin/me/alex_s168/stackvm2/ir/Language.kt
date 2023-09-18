@@ -8,7 +8,7 @@ fun main() {
         b := Static Val Int = a
         c := Val Int = (add a b)
         
-        d := Val RefArr<Int>'10 = :3 9 5:
+        d := Val RefArr<Int>'10 = ::1 2; :3 4; :5 6;;
         
         incFun := Fun<Int>'1 = {
             (return (add A[0] 1))
@@ -34,7 +34,8 @@ object Language {
         "Val",
         "Var",
         "Fun",
-        "Any"
+        "Any",
+        "Type"
     )
 
     fun exeption(message: String, where: Token): Nothing {

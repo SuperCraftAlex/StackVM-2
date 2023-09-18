@@ -47,16 +47,13 @@ fun parse(tokens: List<Token>, off: Int = 0, until: TokenType? = null): Pair<AST
                             nodes.add(ASTVariableCreationNode(left, types, line = token.line, column = token.column))
                         }
 
-                        if (i < tokens.size && tokens[i].type !in listOf(TokenType.END_OF_STATEMENT, TokenType.END_OF_LINE)) {
+                        if (i < tokens.size && tokens[i].type != TokenType.END_OF_LINE) {
                             Language.exeption("Unexpected token", tokens[i])
                         }
                     } else {
                         Language.exeption("Unexpected token", tokens[i + 2])
                     }
                 }
-            }
-            TokenType.END_OF_STATEMENT -> {
-                i++
             }
             TokenType.END_OF_LINE -> {
                 i++

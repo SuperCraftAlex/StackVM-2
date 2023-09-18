@@ -15,10 +15,10 @@ enum class TokenType {
     COMMA,
     COLON,
     ASSIGNMENT,
-    END_OF_STATEMENT,
     END_OF_LINE,
     STAR,
     AND,
-    MODULO
+    MODULO,
+    SEMICOLON
 
 }

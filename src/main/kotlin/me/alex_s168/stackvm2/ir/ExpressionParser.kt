@@ -11,12 +11,12 @@ fun parseExpression(tokens: List<Token>, off: Int): Pair<ASTNode, Int> {
         TokenType.END_OF_LINE -> {}
         TokenType.COLON -> {
             val elems = mutableListOf<ASTNode>()
-            while (i + 1 < tokens.size && tokens[i + 1].type != TokenType.COLON) {
+            while (i + 1 < tokens.size && tokens[i + 1].type != TokenType.SEMICOLON) {
                 val (elem, used) = parseExpression(tokens, i + 1)
                 i += used
                 elems += elem
                 if (i >= tokens.size) {
-                    Language.exeption("Expected closing colon", tokens[i - 1])
+                    Language.exeption("Expected semicolon at end of list", tokens[i - 1])
                 }
             }
             i += 1

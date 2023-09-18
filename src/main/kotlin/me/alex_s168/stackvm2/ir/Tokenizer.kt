@@ -68,7 +68,7 @@ fun tokenize(code: String): List<Token> {
                 column++
             }
             ';' -> {
-                tokens.add(Token(TokenType.END_OF_STATEMENT, ";", line, column))
+                tokens.add(Token(TokenType.SEMICOLON, ";", line, column))
                 column++
             }
             '#' -> {
