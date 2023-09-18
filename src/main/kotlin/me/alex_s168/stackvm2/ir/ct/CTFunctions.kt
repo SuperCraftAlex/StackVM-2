@@ -10,9 +10,9 @@ object CTFunctions {
     private val FUNCS = HashMap<String, CTFunc>()
 
     init {
-        reg("add!", listOf(Type("Int!"), Type("Int!"))) { (a, b) ->
-            minimizeCT(a)
-            minimizeCT(b)
+        reg("add!", listOf(Type("Int!"), Type("Int!"))) { (aIn, bIn) ->
+            val a = minimizeCT(aIn)
+            val b = minimizeCT(bIn)
 
             if (a !is ASTIntLiteralNode)
                 throw InvalidCTArgumentsException()

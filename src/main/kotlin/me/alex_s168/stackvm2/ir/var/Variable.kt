@@ -1,5 +1,7 @@
 package me.alex_s168.stackvm2.ir.`var`
 
+import me.alex_s168.stackvm2.ir.ast.ASTNode
+
 class Variable(
     val name: String,
     val type: Type,
@@ -7,6 +9,12 @@ class Variable(
 
     val defLine: Int,
     val defColumn: Int,
-    val defLength: Int
+    val defLength: Int,
+
+    var defaultValue: ASTNode? = null,
 ) {
+
+    override fun toString(): String =
+        "Variable(name=$name, type=$type, mutable=$isMutable)"
+
 }

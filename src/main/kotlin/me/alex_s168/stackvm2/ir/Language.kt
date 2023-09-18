@@ -6,8 +6,8 @@ import kotlin.system.exitProcess
 import com.github.ajalt.mordant.rendering.TextColors.*
 import com.github.ajalt.mordant.rendering.TextStyles
 import com.github.ajalt.mordant.terminal.Terminal
-import me.alex_s168.ktlib.any.println
 import me.alex_s168.stackvm2.ir.ct.minimizeCT
+import me.alex_s168.stackvm2.ir.exception.HandledException
 
 fun main() {
     val code = """
@@ -17,9 +17,10 @@ fun main() {
         
         d := Val RefArr<Int>'10 = ::1 2; :3 4; :5 6;;
         
-        incFun := Fun<Int>'1 = {
+        incFun := Fun<Int>'Int = {
             (return (add A[0] 1))
         }
+        (add f)
         
         d[1] = (incFun d[1])
     """.trimIndent()
@@ -29,14 +30,15 @@ fun main() {
         val (ast, _) = parse(tokens)
         prepare(ast)
         minimizeCT(ast)
+        check(ast)
         println(ast)
+    } catch (_: HandledException) {
+        exitProcess(1)
     } catch (e: Exception) {
         e.printStackTrace()
         exitProcess(1)
     }
 }
-
-class ParseException(message: String): Exception(message)
 
 object Language {
 
@@ -78,7 +80,7 @@ object Language {
         t.print(" ".repeat(max(0, l2str.length - message.length / 2)))
         t.print(red(message))
         t.println(" (${gray(line.toString())}:${gray(column.toString())})")
-        throw ParseException("$message at ($line:$column)")
+        throw HandledException("$message at ($line:$column)")
     }
 
     fun exception(message: String, where: Token): Nothing =

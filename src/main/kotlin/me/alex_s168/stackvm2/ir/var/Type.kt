@@ -8,6 +8,9 @@ class Type(
     val ct: Boolean = name.lastOrNull()?.equals('!') ?: false
 ) {
 
+    override fun toString(): String =
+        "Type(name=${name.removeSuffix("!") + if (ct) "!" else ""}, genericTypes=$generics)"
+
     companion object {
         val ANY_HASH = Type("Any").hashCode()
     }

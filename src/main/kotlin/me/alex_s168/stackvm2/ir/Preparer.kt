@@ -1,6 +1,7 @@
 package me.alex_s168.stackvm2.ir
 
 import me.alex_s168.stackvm2.ir.ast.*
+import me.alex_s168.stackvm2.ir.ct.minimizeCT
 import me.alex_s168.stackvm2.ir.`var`.Type
 import me.alex_s168.stackvm2.ir.`var`.Variable
 import me.alex_s168.stackvm2.ir.`var`.getTypeGenerics
@@ -91,13 +92,18 @@ fun prepare(node: ASTNode) {
             )
         }
 
+        node.default?.let {
+            setParent(it, node)
+            minimizeCT(it)
+        }
         val v = Variable(
             name,
             type!!,
             mutable,
             node.line,
             node.column,
-            node.length
+            node.length,
+            node.default
         )
 
         if (node.parent == null)
