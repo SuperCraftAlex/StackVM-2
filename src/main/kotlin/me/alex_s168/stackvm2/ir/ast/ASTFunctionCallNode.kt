@@ -1,11 +1,29 @@
 package me.alex_s168.stackvm2.ir.ast
 
+import me.alex_s168.stackvm2.ir.exception.ASTNodeRebuildException
+
 class ASTFunctionCallNode(
-    val func: ASTNode,
-    val arguments: List<ASTNode>,
+    var func: ASTNode,
+    var arguments: List<ASTNode>,
     line: Int,
-    column: Int
-): ASTNode(listOf(func) + arguments, line, column) {
+    column: Int,
+    length: Int,
+    parent: ASTNode?
+): ASTNode(
+    children = (listOf(func) + arguments)
+        .toMutableList(),
+    line,
+    column,
+    length,
+    parent
+) {
+
+    override fun rebuildFromChildren() {
+        if (children.isEmpty())
+            throw ASTNodeRebuildException()
+        func = children.first()
+        arguments = children.subList(1, children.size)
+    }
 
     override fun toStringShowChildren(): Boolean =
         false

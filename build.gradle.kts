@@ -14,7 +14,8 @@ repositories {
 dependencies {
     testImplementation(kotlin("test"))
 
-    implementation("com.github.SuperCraftAlex:ktlib:f1bbb60322")
+    implementation("com.github.SuperCraftAlex:ktlib:1e47e3902a")
+    implementation("com.github.ajalt.mordant:mordant:2.1.0")
 }
 
 tasks.test {

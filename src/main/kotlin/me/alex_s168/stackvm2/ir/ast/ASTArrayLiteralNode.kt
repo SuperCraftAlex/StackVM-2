@@ -1,7 +1,15 @@
 package me.alex_s168.stackvm2.ir.ast
 
 class ASTArrayLiteralNode(
-    val value: List<ASTNode>,
+    val value: MutableList<ASTNode>,
     line: Int,
-    column: Int
-): ASTNode(value, line, column)
+    column: Int,
+    length: Int,
+    parent: ASTNode?
+): ASTNode(
+    children = value,
+    line,
+    column,
+    length,
+    parent
+)

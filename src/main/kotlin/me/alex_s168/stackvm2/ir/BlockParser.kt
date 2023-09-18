@@ -5,25 +5,29 @@ import me.alex_s168.stackvm2.ir.token.Token
 import me.alex_s168.stackvm2.ir.token.TokenType
 
 fun parse(tokens: List<Token>, off: Int = 0, until: TokenType? = null): Pair<ASTBlockNode, Int> {
-    val nodes = mutableListOf<ASTNode>()
-
     var i = off
-    if (i >= tokens.size) {
-        return ASTBlockNode(nodes, 0, 0) to 0
-    }
-    val (firstLine, firstColumn) = tokens[i].line to tokens[i].column
+
+    if (i >= tokens.size)
+        return ASTBlockNode(mutableListOf(), 0, 0, 0, null) to 0
+
+    val (firstLine, firstColumn, firstLength) = Triple(tokens[i].line, tokens[i].column, tokens[i].value.length)
+
+    val node = ASTBlockNode(mutableListOf(), firstLine, firstColumn, firstLength, null)
+
     while (i < tokens.size) {
         val token = tokens[i]
-        if (token.type == until) {
-            return ASTBlockNode(nodes, firstLine, firstColumn) to i - off
-        }
+        if (token.type == until)
+            return node to (i - off)
+
         when (token.type) {
             TokenType.IDENTIFIER, TokenType.STAR -> {
                 val (left, usedTokens) = parseExpression(tokens, i)
                 i += usedTokens
                 if (i < tokens.size && tokens[i].type == TokenType.ASSIGNMENT) {
                     val (right, usedTokens2) = parseExpression(tokens, i + 1)
-                    nodes.add(ASTAssignmentNode(left, right, token.line, token.column))
+                    node.children += ASTAssignmentNode(left, right, token.line, token.column, token.value.length, node).also {
+                        setParent(it, node)
+                    }
                     i += usedTokens2 + 1
                 } else if (i < tokens.size && tokens[i].type == TokenType.COLON) {
                     if (i + 1 < tokens.size && tokens[i + 1].type == TokenType.ASSIGNMENT) {
@@ -32,7 +36,7 @@ fun parse(tokens: List<Token>, off: Int = 0, until: TokenType? = null): Pair<AST
                         while (i < tokens.size && tokens[i].type == TokenType.IDENTIFIER) {
                             val (type, usedTokens2) = parseExpression(tokens, i)
                             if (type !is ASTTypeNode) {
-                                Language.exeption("Expected type", tokens[i])
+                                Language.exception("Expected type", tokens[i])
                             }
                             types.add(type)
                             i += usedTokens2
@@ -40,18 +44,36 @@ fun parse(tokens: List<Token>, off: Int = 0, until: TokenType? = null): Pair<AST
 
                         if (i < tokens.size && tokens[i].type == TokenType.ASSIGNMENT) {
                             val (right, usedTokens2) = parseExpression(tokens, i + 1)
-                            nodes.add(ASTVariableCreationNode(left, types, default = right, line = token.line, column = token.column))
+                            node.children += ASTVariableCreationNode(
+                                    left,
+                                    types,
+                                    default = right,
+                                    line = token.line,
+                                    column = token.column,
+                                    length = token.value.length,
+                                    parent = node
+                                ).also {
+                                setParent(it, node)
+                            }
                             i += usedTokens2 + 1
-                        }
-                        else {
-                            nodes.add(ASTVariableCreationNode(left, types, line = token.line, column = token.column))
+                        } else {
+                            node.children += ASTVariableCreationNode(
+                                    left,
+                                    types,
+                                    line = token.line,
+                                    column = token.column,
+                                    length = token.value.length,
+                                    parent = node
+                                ).also {
+                                setParent(it, node)
+                            }
                         }
 
                         if (i < tokens.size && tokens[i].type != TokenType.END_OF_LINE) {
-                            Language.exeption("Unexpected token", tokens[i])
+                            Language.exception("Unexpected token", tokens[i])
                         }
                     } else {
-                        Language.exeption("Unexpected token", tokens[i + 2])
+                        Language.exception("Unexpected token", tokens[i + 2])
                     }
                 }
             }
@@ -60,14 +82,16 @@ fun parse(tokens: List<Token>, off: Int = 0, until: TokenType? = null): Pair<AST
             }
             TokenType.PARENTHESIS_OPEN -> {
                 val (expr, usedTokens) = parseExpression(tokens, i)
-                nodes.add(expr)
+                node.children += expr.also {
+                    setParent(it, node)
+                }
                 i += usedTokens
             }
             else -> {
-                Language.exeption("Unexpected token", token)
+                Language.exception("Unexpected token", token)
             }
         }
     }
 
-    return ASTBlockNode(nodes, firstLine, firstColumn) to i - off
+    return node to (i - off)
 }
