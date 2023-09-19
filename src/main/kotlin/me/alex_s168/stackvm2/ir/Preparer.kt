@@ -2,9 +2,9 @@ package me.alex_s168.stackvm2.ir
 
 import me.alex_s168.stackvm2.ir.ast.*
 import me.alex_s168.stackvm2.ir.ct.minimizeCT
-import me.alex_s168.stackvm2.ir.`var`.Type
+import me.alex_s168.stackvm2.ir.types.Type
 import me.alex_s168.stackvm2.ir.`var`.Variable
-import me.alex_s168.stackvm2.ir.`var`.getTypeGenerics
+import me.alex_s168.stackvm2.ir.types.getTypeGenerics
 import me.alex_s168.stackvm2.ir.`var`.getVariable
 
 fun prepare(node: ASTNode) {
@@ -42,16 +42,16 @@ fun prepare(node: ASTNode) {
                     it.length
                 )
             when (it.name) {
-                "Val" -> {
+                "val" -> {
                     mutable = false
                     variable = true
                 }
-                "Var" -> {
+                "var" -> {
                     mutable = true
                     variable = true
                 }
                 else -> {
-                    type?.let { t ->
+                    type?.let { _ ->
                         Language.exception(
                             "Variable type already specified!",
                             it.line,
@@ -82,6 +82,14 @@ fun prepare(node: ASTNode) {
                 }
             }
         }
+
+        if (!variable)
+            Language.exception(
+                "Missing \"var\" or \"val\"!",
+                node.line,
+                node.column,
+                node.length
+            )
 
         if (type == null) {
             Language.exception(

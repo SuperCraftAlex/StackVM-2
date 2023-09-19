@@ -2,7 +2,7 @@ package me.alex_s168.stackvm2.ir.ct
 
 import me.alex_s168.stackvm2.ir.Language
 import me.alex_s168.stackvm2.ir.ast.*
-import me.alex_s168.stackvm2.ir.`var`.getType
+import me.alex_s168.stackvm2.ir.types.getType
 import me.alex_s168.stackvm2.ir.`var`.getVariable
 
 fun minimizeCT(node: ASTNode): ASTNode {

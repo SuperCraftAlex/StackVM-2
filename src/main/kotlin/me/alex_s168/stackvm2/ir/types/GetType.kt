@@ -1,8 +1,9 @@
-package me.alex_s168.stackvm2.ir.`var`
+package me.alex_s168.stackvm2.ir.types
 
 import me.alex_s168.stackvm2.ir.Language
 import me.alex_s168.stackvm2.ir.ast.*
 import me.alex_s168.stackvm2.ir.ct.minimizeCT
+import me.alex_s168.stackvm2.ir.`var`.getVariable
 
 
 fun getType(node: ASTNode): Type? {

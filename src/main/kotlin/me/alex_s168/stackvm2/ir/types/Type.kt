@@ -1,4 +1,4 @@
-package me.alex_s168.stackvm2.ir.`var`
+package me.alex_s168.stackvm2.ir.types
 
 class Type(
     val name: String,
@@ -7,6 +7,9 @@ class Type(
     val generics: List<Type> = listOf(),
     val ct: Boolean = name.lastOrNull()?.equals('!') ?: false
 ) {
+
+    fun getNameFix(): String =
+        name.removeSuffix("!") + if (ct) "!" else ""
 
     override fun toString(): String =
         "Type(name=${name.removeSuffix("!") + if (ct) "!" else ""}, genericTypes=$generics)"
@@ -23,6 +26,9 @@ class Type(
         return name.removeSuffix("!") == other.removeSuffix("!")
     }
 
+    fun nameAndCTEq(other: Type): Boolean =
+        nameEq(other.name) && ct == other.ct
+
     override fun equals(other: Any?): Boolean =
         hashCode() == other.hashCode()
 
@@ -31,6 +37,7 @@ class Type(
         result = 31 * result + arrSize
         result = 31 * result + (retType?.hashCode() ?: 0)
         result = 31 * result + generics.hashCode()
+        result = 31 * result + ct.hashCode()
         return result
     }
 

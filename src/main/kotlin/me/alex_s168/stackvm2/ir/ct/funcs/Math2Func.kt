@@ -5,7 +5,7 @@ import me.alex_s168.stackvm2.ir.ast.ASTIntLiteralNode
 import me.alex_s168.stackvm2.ir.ast.ASTNode
 import me.alex_s168.stackvm2.ir.ct.SpecialFunc
 import me.alex_s168.stackvm2.ir.ct.minimizeCT
-import me.alex_s168.stackvm2.ir.`var`.Type
+import me.alex_s168.stackvm2.ir.types.Type
 
 class Math2Func(
     name: String,

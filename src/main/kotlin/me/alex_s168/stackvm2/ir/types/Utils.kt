@@ -1,4 +1,4 @@
-package me.alex_s168.stackvm2.ir.`var`
+package me.alex_s168.stackvm2.ir.types
 
 import me.alex_s168.stackvm2.ir.ast.ASTTypeNode
 

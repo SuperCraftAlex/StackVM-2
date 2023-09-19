@@ -2,7 +2,7 @@ package me.alex_s168.stackvm2.ir.ct
 
 import me.alex_s168.stackvm2.ir.ast.ASTNode
 import me.alex_s168.stackvm2.ir.ct.funcs.*
-import me.alex_s168.stackvm2.ir.`var`.Type
+import me.alex_s168.stackvm2.ir.types.Type
 import me.alex_s168.stackvm2.ir.`var`.Variable
 
 object SpecialFunctions {
